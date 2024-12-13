@@ -7,13 +7,13 @@ import lombok.Builder;
 @Builder
 public record SaveUserDto(
 
-String firstName, 
-String lastName, 
-String email, 
-String phone,
-String password,
-LocalDate dateOfBirth
+        String firstName,
+        String lastName,
+        String email,
+        String phone,
+        String password,
+        LocalDate dateOfBirth
 
 ) {
-    
+
 }
