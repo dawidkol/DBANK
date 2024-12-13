@@ -1,0 +1,5 @@
+spring: 
+    application:
+        name: USER_SERVICE
+    profiles:
+        default: dev
