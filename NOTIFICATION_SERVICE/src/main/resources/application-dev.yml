@@ -1,0 +1,59 @@
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:mem:test
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.use.type.headers: false
+      group-id: notification-events-listener-group
+    listener:
+      concurrency: 3
+
+    # SETUP FOR KAFKA INTEGRATION TEST: PRODUCER
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+logging:
+  level:
+    pl:
+      dk:
+        UserService: TRACE
+
+# SETUP FOR SENDING EMAIL
+app:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL}
+    password: ${EMAIL_PASSWORD}
+    protocol-key: mail.transport.protocol
+    protocol-value: smtp
+    smtp-key: mail.smtp.auth
+    smtp-value: true
+    starttls-key: mail.smtp.starttls.enable
+    starttls-value: true
+
+# SETUP FOR SENDING SMS
+twilio:
+  phone:
+    number:
+      from: ${TWILIO_PHONE_NUMBER}
+  account-sid: ${TWILIO_ACCOUNT_SID}
+  auth-token: ${TWILIO_AUTH_TOKEN}
+

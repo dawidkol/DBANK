@@ -1,4 +1,4 @@
-package pl.dk.user_service.user.dto;
+package pl.dk.notification_service.consumer.dtos;
 
 import lombok.Builder;
 

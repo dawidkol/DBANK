@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: NOTIFICATION_SERVICE
+  profiles:
+    active: dev

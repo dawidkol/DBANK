@@ -107,7 +107,8 @@ class UserServiceImplTest {
                 () -> assertThat(result.userId()).isNotBlank(),
                 () -> assertThat(result.firstName()).isEqualTo(firstName),
                 () -> assertThat(result.lastName()).isEqualTo(lastName),
-                () -> assertThat(result.email()).isEqualTo(email)
+                () -> assertThat(result.email()).isEqualTo(email),
+                () -> assertThat(result.phone()).isEqualTo(phone)
         );
     }
 
@@ -186,7 +187,8 @@ class UserServiceImplTest {
                 () -> assertThat(result.userId()).isEqualTo(userId),
                 () -> assertThat(result.firstName()).isEqualTo(firstName),
                 () -> assertThat(result.lastName()).isEqualTo(lastName),
-                () -> assertThat(result.email()).isEqualTo(email)
+                () -> assertThat(result.email()).isEqualTo(email),
+                () -> assertThat(result.phone()).isEqualTo(phone)
         );
     }
 
