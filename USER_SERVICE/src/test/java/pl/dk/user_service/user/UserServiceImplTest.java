@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pl.dk.user_service.exception.UserConstraintException;
 import pl.dk.user_service.exception.UserNotFoundException;
+import pl.dk.user_service.notification.NotificationService;
 import pl.dk.user_service.user.dto.SaveUserDto;
 import pl.dk.user_service.user.dto.UserDto;
 import pl.dk.user_service.user.repositoryDto.EmailPhoneDto;
@@ -31,6 +32,8 @@ class UserServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
     private AutoCloseable autoCloseable;
     private ObjectMapper objectMapper;
     private UserService underTest;
@@ -50,7 +53,7 @@ class UserServiceImplTest {
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        underTest = new UserServiceImpl(userRepository, objectMapper);
+        underTest = new UserServiceImpl(userRepository, objectMapper, notificationService);
 
         userId = UUID.randomUUID().toString();
         email = "john.doe@test.pl";
@@ -92,6 +95,7 @@ class UserServiceImplTest {
         // Given
         when(userRepository.findByEmailOrPhone(email, phone)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenReturn(user);
+        doNothing().when(notificationService).sendToRegistrationTopic(any(UserDto.class));
 
         // When
         UserDto result = underTest.registerUser(saveUserDto);

@@ -1,5 +1,6 @@
 package pl.dk.user_service.user;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +11,7 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 
 import lombok.RequiredArgsConstructor;
+import pl.dk.user_service.notification.NotificationService;
 import pl.dk.user_service.user.dto.SaveUserDto;
 
 import pl.dk.user_service.user.dto.UserDto;
@@ -20,10 +22,13 @@ import pl.dk.user_service.user.repositoryDto.EmailPhoneDto;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
+
 
     @Override
     @Transactional
@@ -40,8 +45,9 @@ class UserServiceImpl implements UserService {
 
         User userToSave = UserDtoMapper.map(saveUserDto);
         User savedUser = userRepository.save(userToSave);
-        return UserDtoMapper.map(savedUser);
-
+        UserDto result = UserDtoMapper.map(savedUser);
+        notificationService.sendToRegistrationTopic(result);
+        return result;
     }
 
     private String checkRegisterConditions(EmailPhoneDto emailPhone, String userEmail, String phone) {
@@ -58,7 +64,6 @@ class UserServiceImpl implements UserService {
         } else {
             result = "email";
         }
-
         return result;
     }
 
