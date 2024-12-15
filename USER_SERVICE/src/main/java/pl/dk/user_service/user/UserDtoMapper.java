@@ -22,6 +22,7 @@ class UserDtoMapper {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
+                .phone(user.getPhone())
                 .build();
 
     }
