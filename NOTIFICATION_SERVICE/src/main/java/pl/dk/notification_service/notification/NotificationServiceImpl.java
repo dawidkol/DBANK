@@ -1,5 +1,8 @@
 package pl.dk.notification_service.notification;
 
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -14,6 +17,15 @@ class NotificationServiceImpl implements NotificationService {
 
     @Value("${app.mail.username}")
     private String email;
+
+    @Value("${twilio.account-sid}")
+    private String ACCOUNT_SID;
+
+    @Value("${twilio.auth-token}")
+    private String AUTH_TOKEN;
+
+    @Value("${twilio.phone.number.from}")
+    private String phoneNumberFrom;
 
     private final JavaMailSender javaMailSender;
 
@@ -44,6 +56,15 @@ class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendUserSmsRegistrationConfirmation(UserDto userDto) {
+        sendTwilioNotification(userDto.phone(), createRegistrationMessage(userDto));
+    }
 
+    @Async
+    void sendTwilioNotification(String phoneNumberTo, String message) {
+        Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+        Message.creator(
+                new PhoneNumber(phoneNumberTo),
+                new PhoneNumber(phoneNumberFrom),
+                (message)).create();
     }
 }
