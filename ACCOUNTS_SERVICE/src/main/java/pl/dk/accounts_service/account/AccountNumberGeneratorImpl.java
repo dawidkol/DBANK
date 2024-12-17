@@ -1,7 +1,5 @@
 package pl.dk.accounts_service.account;
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -11,17 +9,22 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
-@RequiredArgsConstructor
 @Component
 @Slf4j
 class AccountNumberGeneratorImpl implements AccountNumberGenerator {
 
     private final AccountRepository accountRepository;
-    private final Random random = new Random();
+    private final Random random;
+    private final List<Integer> list;
+
+    public AccountNumberGeneratorImpl(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+        this.list = IntStream.rangeClosed(0, 9).boxed().toList();
+        this.random = new Random();
+    }
 
     @Override
     public BigInteger generateAccountNumber() {
-        List<Integer> list = IntStream.rangeClosed(0, 9).boxed().toList();
         boolean result;
         BigInteger createdAccountNumber;
         do {

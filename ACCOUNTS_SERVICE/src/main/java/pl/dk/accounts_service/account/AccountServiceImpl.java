@@ -2,13 +2,13 @@ package pl.dk.accounts_service.account;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 import pl.dk.accounts_service.exception.UserNotFoundException;
+import pl.dk.accounts_service.exception.UserServiceUnavailableException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
@@ -25,7 +25,7 @@ class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountDto createAccount(CreateAccountDto createAccountDto) {
-        checkIfUserExists(createAccountDto);
+        checkUserServiceResponse(createAccountDto);
         Account accountToSave = AccountDtoMapper.map(createAccountDto);
         BigInteger accountNumber = accountNumberGenerator.generateAccountNumber();
         accountToSave.setAccountNumber(accountNumber);
@@ -33,11 +33,11 @@ class AccountServiceImpl implements AccountService {
         return AccountDtoMapper.map(savedAccount);
     }
 
-    private void checkIfUserExists(CreateAccountDto createAccountDto) {
+    private void checkUserServiceResponse(CreateAccountDto createAccountDto) {
         String userId = createAccountDto.userId();
         ResponseEntity<UserDto> userById = userFeignClient.getUserById(userId);
-        boolean sameCodeAs = userById.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND);
-        if (sameCodeAs) {
+        boolean notFound = userById.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND);
+        if (notFound) {
             throw new UserNotFoundException("User with id = %s not found".formatted(userId));
         }
     }

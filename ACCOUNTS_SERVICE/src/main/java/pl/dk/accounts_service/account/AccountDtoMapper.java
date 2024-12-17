@@ -11,7 +11,7 @@ class AccountDtoMapper {
         AccountType accountType = Enum.valueOf(AccountType.class, createAccountDto.accountType());
         return Account.builder()
                 .accountType(accountType)
-                .balance(BigDecimal.ZERO)
+                .balance(createAccountDto.balance())
                 .userId(createAccountDto.userId())
                 .build();
     }
