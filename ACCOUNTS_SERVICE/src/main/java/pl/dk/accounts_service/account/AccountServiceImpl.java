@@ -52,4 +52,15 @@ class AccountServiceImpl implements AccountService {
                     throw new AccountNotExistsException("Account with id: %s not exists");
                 });
     }
+
+    @Transactional
+    @Override
+    public void deleteAccountById(String accountId) {
+        accountRepository.findById(accountId).ifPresentOrElse(
+                account -> {
+                    account.setActive(false);
+                }, () -> {
+                    throw new AccountNotExistsException("Account with id: %s not exists");
+                });
+    }
 }

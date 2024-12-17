@@ -32,4 +32,10 @@ class AccountController {
         AccountDto accountById = accountService.getAccountById(accountId);
         return ResponseEntity.ok(accountById);
     }
+
+    @DeleteMapping("/{accountId}")
+    public ResponseEntity<?> deleteAccountById(@PathVariable String accountId) {
+        accountService.deleteAccountById(accountId);
+        return ResponseEntity.noContent().build();
+    }
 }

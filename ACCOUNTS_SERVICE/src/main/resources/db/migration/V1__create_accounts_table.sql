@@ -8,6 +8,7 @@ CREATE TABLE accounts
     created_at     TIMESTAMP,
     created_by     VARCHAR(100),
     updated_at     TIMESTAMP,
-    updated_by     VARCHAR(100)
+    updated_by     VARCHAR(100),
+    active         BOOLEAN
 );
 

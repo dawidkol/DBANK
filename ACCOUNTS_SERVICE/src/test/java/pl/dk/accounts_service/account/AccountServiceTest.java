@@ -9,7 +9,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 import pl.dk.accounts_service.account.dtos.AccountDto;
-import pl.dk.accounts_service.account.dtos.AccountNumberDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.exception.UserNotFoundException;
@@ -17,14 +16,11 @@ import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
 
-import javax.security.auth.login.AccountNotFoundException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 
@@ -42,6 +38,7 @@ class AccountServiceTest {
     String userId;
     String accountNumber;
     BigDecimal balance;
+    Boolean active;
 
     Account account;
 
@@ -53,12 +50,14 @@ class AccountServiceTest {
         userId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
         accountNumber = "123456789012345678901234";
         balance = BigDecimal.valueOf(10000L);
+        active = true;
 
         account = Account.builder()
                 .accountNumber(accountNumber)
                 .accountType(AccountType.CREDIT)
                 .balance(balance)
                 .userId(userId)
+                .active(active)
                 .build();
     }
 
@@ -103,7 +102,8 @@ class AccountServiceTest {
                 () -> assertThat(accountDto.accountType()).isEqualTo(AccountType.CREDIT.toString()),
                 () -> assertThat(accountDto.accountNumber()).isEqualTo(accountNumber),
                 () -> assertThat(accountDto.balance()).isEqualTo(balance),
-                () -> assertThat(accountDto.userId()).isEqualTo(userId)
+                () -> assertThat(accountDto.userId()).isEqualTo(userId),
+                () -> assertThat(accountDto.active()).isEqualTo(active)
         );
     }
 
@@ -142,7 +142,8 @@ class AccountServiceTest {
                 () -> assertThat(result.accountNumber()).isEqualTo(accountNumber),
                 () -> assertThat(result.balance()).isEqualTo(balance),
                 () -> assertThat(result.accountType()).isEqualTo(account.getAccountType().toString()),
-                () -> assertThat(result.userId()).isEqualTo(userId)
+                () -> assertThat(result.userId()).isEqualTo(userId),
+                () -> assertThat(result.active()).isEqualTo(active)
         );
 
     }
@@ -161,4 +162,30 @@ class AccountServiceTest {
 
     }
 
+    @Test
+    @DisplayName("It should set account active property as false successfully by given id")
+    void itShouldSetAccountActivePropertyAsFalseSuccessfullyByGivenId() {
+        // Given
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
+
+        // When
+        underTest.deleteAccountById(accountNumber);
+
+        // Then
+        assertFalse(account.getActive());
+        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
+    }
+
+    @Test
+    @DisplayName("It throw AccountNotExistsException when user tries to delete non existing account ")
+    void itShouldThrowAccountNotExistsExceptionWhenUserTriesToDeleteNonExistingAccount() {
+        // Given
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.empty());
+
+        // When Then
+        assertThrows(AccountNotExistsException.class, () -> underTest.deleteAccountById(accountNumber));
+
+        // Then
+        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
+    }
 }

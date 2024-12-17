@@ -13,6 +13,7 @@ class AccountDtoMapper {
                 .accountType(accountType)
                 .balance(createAccountDto.balance())
                 .userId(createAccountDto.userId())
+                .active(true)
                 .build();
     }
 
@@ -22,6 +23,7 @@ class AccountDtoMapper {
                 .accountType(account.getAccountType().toString())
                 .balance(account.getBalance())
                 .userId(account.getUserId())
+                .active(account.getActive())
                 .build();
     }
 }

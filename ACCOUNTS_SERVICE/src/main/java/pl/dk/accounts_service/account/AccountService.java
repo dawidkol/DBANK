@@ -7,4 +7,5 @@ interface AccountService {
 
     AccountDto createAccount(CreateAccountDto createAccountDto);
     AccountDto getAccountById(String accountId);
+    void deleteAccountById(String accountId);
 }

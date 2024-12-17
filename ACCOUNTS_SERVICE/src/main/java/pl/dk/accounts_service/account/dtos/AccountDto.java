@@ -10,6 +10,7 @@ public record AccountDto(
         String accountNumber,
         String accountType,
         BigDecimal balance,
-        String userId
+        String userId,
+        Boolean active
 ) {
 }
