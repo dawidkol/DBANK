@@ -3,10 +3,7 @@ package pl.dk.accounts_service.account;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
@@ -28,5 +25,11 @@ class AccountController {
                 .buildAndExpand(account.accountNumber())
                 .toUri();
         return ResponseEntity.created(uri).body(account);
+    }
+
+    @GetMapping("/{accountId}")
+    public ResponseEntity<AccountDto> getAccountById(@PathVariable String accountId) {
+        AccountDto accountById = accountService.getAccountById(accountId);
+        return ResponseEntity.ok(accountById);
     }
 }

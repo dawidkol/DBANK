@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.exception.AccountAlreadyExistsException;
+import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.exception.UserNotFoundException;
 import pl.dk.accounts_service.exception.UserServiceUnavailableException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
@@ -40,5 +42,14 @@ class AccountServiceImpl implements AccountService {
         if (notFound) {
             throw new UserNotFoundException("User with id = %s not found".formatted(userId));
         }
+    }
+
+    @Override
+    public AccountDto getAccountById(String accountId) {
+        return accountRepository.findById(accountId)
+                .map(AccountDtoMapper::map)
+                .orElseThrow(() -> {
+                    throw new AccountNotExistsException("Account with id: %s not exists");
+                });
     }
 }

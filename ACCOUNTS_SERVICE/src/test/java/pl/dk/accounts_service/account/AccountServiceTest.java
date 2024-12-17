@@ -9,14 +9,18 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 import pl.dk.accounts_service.account.dtos.AccountDto;
+import pl.dk.accounts_service.account.dtos.AccountNumberDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.exception.UserNotFoundException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
 
+import javax.security.auth.login.AccountNotFoundException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -35,10 +39,27 @@ class AccountServiceTest {
     private AutoCloseable autoCloseable;
     private AccountService underTest;
 
+    String userId;
+    String accountNumber;
+    BigDecimal balance;
+
+    Account account;
+
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
         underTest = new AccountServiceImpl(accountRepository, accountNumberGenerator, userFeignClient);
+
+        userId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
+        accountNumber = "123456789012345678901234";
+        balance = BigDecimal.valueOf(10000L);
+
+        account = Account.builder()
+                .accountNumber(accountNumber)
+                .accountType(AccountType.CREDIT)
+                .balance(balance)
+                .userId(userId)
+                .build();
     }
 
     @AfterEach
@@ -50,8 +71,6 @@ class AccountServiceTest {
     @DisplayName("It should create Account Successfully")
     void itShouldCreateAccountSuccessfully() {
         // Given
-        String userId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
-        BigDecimal balance = BigDecimal.valueOf(10000L);
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
                 .accountType("CREDIT")
                 .balance(balance)
@@ -64,14 +83,6 @@ class AccountServiceTest {
                 .lastName("Doe")
                 .phone("+48669964099")
                 .email("dkcodepro@gmail.com")
-                .build();
-
-        String accountNumber = "123456789012345678901234";
-        Account account = Account.builder()
-                .accountNumber(accountNumber)
-                .accountType(AccountType.CREDIT)
-                .balance(balance)
-                .userId(userId)
                 .build();
 
         ResponseEntity<UserDto> mockResponse = ResponseEntity.ok(userDto);
@@ -100,7 +111,6 @@ class AccountServiceTest {
     @DisplayName("It should throw UserNotFoundException when user tries to create account with non existing userId")
     void itShouldThrowUserNotExistsExceptionWhenUserTriesToCreateAccountWithNonExistingUserId() {
         // Given
-        String userId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
         BigDecimal balance = BigDecimal.valueOf(10000L);
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
                 .accountType("CREDIT")
@@ -114,6 +124,41 @@ class AccountServiceTest {
 
         // Then
         Mockito.verify(userFeignClient, Mockito.times(1)).getUserById(userId);
+    }
+
+    @Test
+    @DisplayName("It should find account by given id successfully")
+    void itShouldFindAccountByGivenIdSuccessfully() {
+        // Given
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
+
+        // When
+        AccountDto result = underTest.getAccountById(accountNumber);
+
+        //Then
+        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
+        assertAll(
+                () -> assertThat(result.userId()).isEqualTo(userId),
+                () -> assertThat(result.accountNumber()).isEqualTo(accountNumber),
+                () -> assertThat(result.balance()).isEqualTo(balance),
+                () -> assertThat(result.accountType()).isEqualTo(account.getAccountType().toString()),
+                () -> assertThat(result.userId()).isEqualTo(userId)
+        );
+
+    }
+
+    @Test
+    @DisplayName("It should throw AccountNotFoundException when account not exists")
+    void itShouldThrowAccountNotFoundExceptionWhenAccountNotExists() {
+        // Given
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.empty());
+
+        // When
+        assertThrows(AccountNotExistsException.class, () -> underTest.getAccountById(accountNumber));
+
+        //Then
+        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
+
     }
 
 }
