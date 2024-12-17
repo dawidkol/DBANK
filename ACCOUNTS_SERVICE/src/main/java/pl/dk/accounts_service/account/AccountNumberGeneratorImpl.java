@@ -19,7 +19,6 @@ class AccountNumberGeneratorImpl implements AccountNumberGenerator {
     private final AccountRepository accountRepository;
     private final Random random = new Random();
 
-    @PostConstruct
     @Override
     public BigInteger generateAccountNumber() {
         List<Integer> list = IntStream.rangeClosed(0, 9).boxed().toList();
