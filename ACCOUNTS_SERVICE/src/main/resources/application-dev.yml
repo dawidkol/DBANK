@@ -8,6 +8,9 @@ spring:
   config:
     activate:
       on-profile: dev
+  output:
+    ansi:
+      enabled: ALWAYS
 
   cloud:
     openfeign:

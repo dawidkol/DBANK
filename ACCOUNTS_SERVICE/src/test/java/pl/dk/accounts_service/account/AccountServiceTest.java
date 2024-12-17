@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 import pl.dk.accounts_service.exception.UserNotFoundException;
-import pl.dk.accounts_service.exception.UserServiceUnavailableException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
@@ -25,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 
-class AccountServiceImplTest {
+class AccountServiceTest {
 
     @Mock
     private UserFeignClient userFeignClient;
@@ -67,7 +66,7 @@ class AccountServiceImplTest {
                 .email("dkcodepro@gmail.com")
                 .build();
 
-        BigInteger accountNumber = new BigInteger("123456789012345678901234");
+        String accountNumber = "123456789012345678901234";
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .accountType(AccountType.CREDIT)

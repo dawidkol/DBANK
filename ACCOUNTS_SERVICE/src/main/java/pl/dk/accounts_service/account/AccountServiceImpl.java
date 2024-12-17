@@ -27,7 +27,7 @@ class AccountServiceImpl implements AccountService {
     public AccountDto createAccount(CreateAccountDto createAccountDto) {
         checkUserServiceResponse(createAccountDto);
         Account accountToSave = AccountDtoMapper.map(createAccountDto);
-        BigInteger accountNumber = accountNumberGenerator.generateAccountNumber();
+        String accountNumber = accountNumberGenerator.generateAccountNumber();
         accountToSave.setAccountNumber(accountNumber);
         Account savedAccount = accountRepository.save(accountToSave);
         return AccountDtoMapper.map(savedAccount);

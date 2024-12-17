@@ -4,5 +4,5 @@ import java.math.BigInteger;
 
 interface AccountNumberGenerator {
 
-    BigInteger generateAccountNumber();
+    String generateAccountNumber();
 }

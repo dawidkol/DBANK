@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS accounts;
 CREATE TABLE accounts
 (
-    account_number NUMERIC NOT NULL PRIMARY KEY,
+    account_number VARCHAR(26) NOT NULL PRIMARY KEY,
     account_type   VARCHAR(20),
     balance        DECIMAL,
     user_id        VARCHAR(255),

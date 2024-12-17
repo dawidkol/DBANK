@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,7 +14,7 @@ import java.time.LocalDateTime;
 class Account extends BaseEntity{
 
     @Id
-    private BigInteger accountNumber;
+    private String accountNumber;
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
     private BigDecimal balance;
@@ -23,7 +22,7 @@ class Account extends BaseEntity{
 
     @Builder
 
-    public Account(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, BigInteger accountNumber, AccountType accountType, BigDecimal balance, String userId) {
+    public Account(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String accountNumber, AccountType accountType, BigDecimal balance, String userId) {
         super(createdAt, createdBy, updatedAt, updatedBy);
         this.accountNumber = accountNumber;
         this.accountType = accountType;

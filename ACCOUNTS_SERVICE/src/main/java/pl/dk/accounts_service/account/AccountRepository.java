@@ -9,8 +9,8 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 @Repository
-interface AccountRepository extends JpaRepository<Account, BigInteger> {
+interface AccountRepository extends JpaRepository<Account, String> {
 
-    Optional<AccountNumberDto> findByAccountNumber(BigInteger accountNumber);
+    Optional<AccountNumberDto> findByAccountNumber(String accountNumber);
 
 }
