@@ -196,13 +196,13 @@ class AccountServiceTest {
     void itShouldUpdateAccountBalanceSuccessfully() {
         // Given
         Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
-        BigDecimal amount = BigDecimal.valueOf(1000);
+        BigDecimal updateByValue = BigDecimal.valueOf(1000);
 
         // When
-        AccountDto result = underTest.updateAccountBalance(accountNumber, amount);
+        AccountDto result = underTest.updateAccountBalance(accountNumber, updateByValue);
 
         // Then
-        assertThat(result.balance()).isEqualTo(balance.add(amount));
+        assertThat(result.balance()).isEqualTo(balance.add(updateByValue));
     }
 
     @Test
@@ -211,11 +211,11 @@ class AccountServiceTest {
         // Given
         account.setActive(false);
         Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
-        BigDecimal amount = BigDecimal.valueOf(1000);
+        BigDecimal updateByValue = BigDecimal.valueOf(1000);
 
         // When Then
         assertThrows(AccountInactiveException.class,
-                () -> underTest.updateAccountBalance(accountNumber, amount));
+                () -> underTest.updateAccountBalance(accountNumber, updateByValue));
         Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
     }
 
@@ -224,11 +224,11 @@ class AccountServiceTest {
     void itShouldThrowAccountBalanceExceptionWhenAmountIsGreaterThanCurrentAccountBalance() {
         // Given
         Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
-        BigDecimal amount = BigDecimal.valueOf(-1000000);
+        BigDecimal updateByValue = BigDecimal.valueOf(-1000000);
 
         // When
         assertThrows(AccountBalanceException.class,
-                () -> underTest.updateAccountBalance(accountNumber, amount));
+                () -> underTest.updateAccountBalance(accountNumber, updateByValue));
         Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
     }
 }

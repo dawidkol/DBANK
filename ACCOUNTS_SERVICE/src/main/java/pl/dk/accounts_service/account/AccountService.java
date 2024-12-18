@@ -10,5 +10,5 @@ interface AccountService {
     AccountDto createAccount(CreateAccountDto createAccountDto);
     AccountDto getAccountById(String accountId);
     void deleteAccountById(String accountId);
-    AccountDto updateAccountBalance(String accountId, BigDecimal amount);
+    AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue);
 }

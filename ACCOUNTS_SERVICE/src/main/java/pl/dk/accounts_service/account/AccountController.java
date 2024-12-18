@@ -41,8 +41,8 @@ class AccountController {
     }
 
     @PatchMapping("/{accountId}")
-    public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @Valid @RequestBody BigDecimal amount) {
-        AccountDto accountDto = accountService.updateAccountBalance(accountId, amount);
+    public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @Valid @RequestBody BigDecimal updateByValue) {
+        AccountDto accountDto = accountService.updateAccountBalance(accountId, updateByValue);
         return ResponseEntity.ok(accountDto);
     }
 }

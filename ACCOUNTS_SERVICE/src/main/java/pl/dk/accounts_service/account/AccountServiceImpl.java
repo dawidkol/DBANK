@@ -62,24 +62,24 @@ class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountDto updateAccountBalance(String accountId, BigDecimal amount) {
+    public AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue) {
         return accountRepository.findById(accountId)
                 .map(account -> {
                     isAccountActive(account);
-                    updateAccountBalance(amount, account);
+                    updateAccountBalance(updateByValue, account);
                     return AccountDtoMapper.map(account);
                 })
                 .orElseThrow(() -> new AccountNotExistsException("Account with id: %s not exists"));
     }
 
-    private void updateAccountBalance(BigDecimal amount, Account account) {
+    private void updateAccountBalance(BigDecimal updateByValue, Account account) {
         BigDecimal currentBalance = account.getBalance();
-        BigDecimal absAmount = amount.abs();
+        BigDecimal absAmount = updateByValue.abs();
         int result = currentBalance.compareTo(absAmount);
         if (result < 0) {
             throw new AccountBalanceException("Insufficient funds in the account");
         }
-        BigDecimal updatedAccountBalance = currentBalance.add(amount);
+        BigDecimal updatedAccountBalance = currentBalance.add(updateByValue);
         account.setBalance(updatedAccountBalance);
     }
 
