@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 
 @RestControllerAdvice
-class RestControllerHandler {
+public class RestControllerHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
@@ -21,7 +21,7 @@ class RestControllerHandler {
                 .toList();
     }
 
-    record MethodArgumentNotValidExceptionWrapper(String property, String message) { }
+    public record MethodArgumentNotValidExceptionWrapper(String property, String message) { }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
@@ -33,6 +33,6 @@ class RestControllerHandler {
                 .toList();
     }
 
-    record ConstraintViolationExceptionWrapper(String value, String message) { }
+    public record ConstraintViolationExceptionWrapper(String value, String message) { }
 
 }

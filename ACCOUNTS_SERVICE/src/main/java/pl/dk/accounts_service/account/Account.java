@@ -20,6 +20,7 @@ class Account extends BaseEntity{
     @NotNull
     private AccountType accountType;
     @PositiveOrZero
+    @NotNull
     private BigDecimal balance;
     @NotBlank
     private String userId;

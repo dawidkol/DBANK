@@ -1,11 +1,14 @@
 package pl.dk.accounts_service.account;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -14,10 +17,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.error.RestControllerHandler;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"eureka.client.enabled=false"})
 @Transactional
-class AccountControllerTest {
+class AccountIntegrationTest {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -55,6 +60,7 @@ class AccountControllerTest {
     }
 
     @Test
+    @DisplayName("Typical scenario with Controller endpoints")
     void typicalScenarioWithControllerEndpoints() {
         // 1. User tries to create account with valid data: Expected status: 201 CREATED
         // Given
@@ -132,6 +138,38 @@ class AccountControllerTest {
         // Then
         assertAll(() -> {
             assertEquals(HttpStatus.NOT_FOUND, patch404Response.getStatusCode());
+        });
+
+    }
+
+    @Test
+    @DisplayName("It should return bad request when account creation fails due to invalid data")
+    void itShouldReturnBadRequestWhenAccountCreationFailsDueToInvalidData() {
+        // 1. User tries to create account with valid data: Expected status: 400 BAD_REQUEST
+        // Given
+        CreateAccountDto createAccountDto = CreateAccountDto.builder()
+                .accountType("Invalid account type")
+                .build();
+
+        // When
+        ParameterizedTypeReference<List<RestControllerHandler.MethodArgumentNotValidExceptionWrapper>> responseType =
+                new ParameterizedTypeReference<>() {
+                };
+
+        ResponseEntity<List<RestControllerHandler.MethodArgumentNotValidExceptionWrapper>> postResponse =
+                testRestTemplate.exchange(
+                        "/accounts",
+                        HttpMethod.POST,
+                        new HttpEntity<>(createAccountDto),
+                        responseType
+                );
+
+        // Then
+        assertEquals(HttpStatus.BAD_REQUEST, postResponse.getStatusCode());
+        List<RestControllerHandler.MethodArgumentNotValidExceptionWrapper> body = postResponse.getBody();
+        assertAll(() -> {
+            assertNotNull(body);
+            assertEquals(3, postResponse.getBody().size());
         });
 
     }
