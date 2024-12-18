@@ -61,7 +61,7 @@ class UserServiceImplTest {
 
         firstName = "John";
         lastName = "Doe";
-        password = "securepassword123";
+        password = "Securepassword123$";
         dateOfBirth = LocalDate.of(1990, 1, 1);
 
         saveUserDto = SaveUserDto.builder()
