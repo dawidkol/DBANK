@@ -1,6 +1,7 @@
 package pl.dk.accounts_service.account;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -16,9 +17,13 @@ class Account extends BaseEntity{
     @Id
     private String accountNumber;
     @Enumerated(EnumType.STRING)
+    @NotNull
     private AccountType accountType;
+    @PositiveOrZero
     private BigDecimal balance;
+    @NotBlank
     private String userId;
+    @NotNull
     private Boolean active;
 
     @Builder

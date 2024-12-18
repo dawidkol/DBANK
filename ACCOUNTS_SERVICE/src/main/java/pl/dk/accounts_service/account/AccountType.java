@@ -1,6 +1,6 @@
 package pl.dk.accounts_service.account;
 
-enum AccountType {
+public enum AccountType {
     SAVINGS,
     CHECKING,
     BUSINESS,
