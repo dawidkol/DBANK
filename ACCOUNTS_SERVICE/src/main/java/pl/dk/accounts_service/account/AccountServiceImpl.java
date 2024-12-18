@@ -7,14 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-import pl.dk.accounts_service.exception.AccountAlreadyExistsException;
-import pl.dk.accounts_service.exception.AccountNotExistsException;
-import pl.dk.accounts_service.exception.UserNotFoundException;
-import pl.dk.accounts_service.exception.UserServiceUnavailableException;
+import pl.dk.accounts_service.exception.*;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -48,9 +45,8 @@ class AccountServiceImpl implements AccountService {
     public AccountDto getAccountById(String accountId) {
         return accountRepository.findById(accountId)
                 .map(AccountDtoMapper::map)
-                .orElseThrow(() -> {
-                    throw new AccountNotExistsException("Account with id: %s not exists");
-                });
+                .orElseThrow(() ->
+                        new AccountNotExistsException("Account with id: %s not exists".formatted(accountId)));
     }
 
     @Transactional
@@ -63,4 +59,34 @@ class AccountServiceImpl implements AccountService {
                     throw new AccountNotExistsException("Account with id: %s not exists");
                 });
     }
+
+    @Override
+    @Transactional
+    public AccountDto updateAccountBalance(String accountId, BigDecimal amount) {
+        return accountRepository.findById(accountId)
+                .map(account -> {
+                    isAccountActive(account);
+                    updateAccountBalance(amount, account);
+                    return AccountDtoMapper.map(account);
+                })
+                .orElseThrow(() -> new AccountNotExistsException("Account with id: %s not exists"));
+    }
+
+    private void updateAccountBalance(BigDecimal amount, Account account) {
+        BigDecimal currentBalance = account.getBalance();
+        BigDecimal absAmount = amount.abs();
+        int result = currentBalance.compareTo(absAmount);
+        if (result < 0) {
+            throw new AccountBalanceException("Insufficient funds in the account");
+        }
+        BigDecimal updatedAccountBalance = currentBalance.add(amount);
+        account.setBalance(updatedAccountBalance);
+    }
+
+    private void isAccountActive(Account account) {
+        if (!account.getActive()) {
+            throw new AccountInactiveException("Account with number: %s is inactive".formatted(account.getAccountNumber()));
+        }
+    }
+
 }

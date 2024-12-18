@@ -10,6 +10,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.exception.AccountBalanceException;
+import pl.dk.accounts_service.exception.AccountInactiveException;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.exception.UserNotFoundException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
@@ -186,6 +188,47 @@ class AccountServiceTest {
         assertThrows(AccountNotExistsException.class, () -> underTest.deleteAccountById(accountNumber));
 
         // Then
+        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
+    }
+
+    @Test
+    @DisplayName("It should update account balance successfully")
+    void itShouldUpdateAccountBalanceSuccessfully() {
+        // Given
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
+        BigDecimal amount = BigDecimal.valueOf(1000);
+
+        // When
+        AccountDto result = underTest.updateAccountBalance(accountNumber, amount);
+
+        // Then
+        assertThat(result.balance()).isEqualTo(balance.add(amount));
+    }
+
+    @Test
+    @DisplayName("It should throw AccountInactiveException when account is inactive")
+    void itShouldThrowAccountInactiveExceptionWhenAccountIsInactive() {
+        // Given
+        account.setActive(false);
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
+        BigDecimal amount = BigDecimal.valueOf(1000);
+
+        // When Then
+        assertThrows(AccountInactiveException.class,
+                () -> underTest.updateAccountBalance(accountNumber, amount));
+        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
+    }
+
+    @Test
+    @DisplayName("It should throw AccountBalanceException when amount is greater that current account balance")
+    void itShouldThrowAccountBalanceExceptionWhenAmountIsGreaterThanCurrentAccountBalance() {
+        // Given
+        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
+        BigDecimal amount = BigDecimal.valueOf(-1000000);
+
+        // When
+        assertThrows(AccountBalanceException.class,
+                () -> underTest.updateAccountBalance(accountNumber, amount));
         Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
     }
 }

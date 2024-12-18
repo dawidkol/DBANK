@@ -8,6 +8,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 
+import java.math.BigDecimal;
 import java.net.URI;
 
 @RestController
@@ -37,5 +38,11 @@ class AccountController {
     public ResponseEntity<?> deleteAccountById(@PathVariable String accountId) {
         accountService.deleteAccountById(accountId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{accountId}")
+    public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @Valid @RequestBody BigDecimal amount) {
+        AccountDto accountDto = accountService.updateAccountBalance(accountId, amount);
+        return ResponseEntity.ok(accountDto);
     }
 }
