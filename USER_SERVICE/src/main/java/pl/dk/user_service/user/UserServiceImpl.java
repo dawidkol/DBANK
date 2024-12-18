@@ -93,8 +93,8 @@ class UserServiceImpl implements UserService {
             SaveUserDto patchedData = this.applyPatch(prepareData, jsonMergePatch);
             User userToUpdate = UserDtoMapper.map(patchedData);
             userToUpdate.setId(userId);
+            userToUpdate.setActive(true);
             userRepository.save(userToUpdate);
-
         } catch (JsonProcessingException | JsonPatchException e) {
             throw new ServerException("Something goes wrong on application side, try again later");
         }

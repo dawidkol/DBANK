@@ -8,5 +8,6 @@ public record UserDto(
         String firstName,
         String lastName,
         String phone,
-        String email) {
+        String email,
+        Boolean active) {
 }

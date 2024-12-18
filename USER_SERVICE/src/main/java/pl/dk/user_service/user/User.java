@@ -38,9 +38,11 @@ class User extends BaseEntity {
     private String password;
     @Past
     private LocalDate dateOfBirth;
+    @NotNull
+    private Boolean active;
 
     @Builder
-    public User(String id, LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String firstName, String lastName, String email, String phone, String password, LocalDate dateOfBirth) {
+    public User(String id, LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String firstName, String lastName, String email, String phone, String password, LocalDate dateOfBirth, Boolean active) {
         super(id, createdAt, createdBy, updatedAt, updatedBy);
         this.firstName = firstName;
         this.lastName = lastName;
@@ -48,6 +50,6 @@ class User extends BaseEntity {
         this.phone = phone;
         this.password = password;
         this.dateOfBirth = dateOfBirth;
+        this.active = active;
     }
-
 }
