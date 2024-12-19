@@ -78,7 +78,9 @@ class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUserById(String userId) {
         userRepository.findById(userId)
-                .ifPresentOrElse(userRepository::delete, () -> {
+                .ifPresentOrElse(user -> {
+                    user.setActive(false);
+                }, () -> {
                     throw new UserNotFoundException("User with id = %s not found".formatted(userId));
                 });
     }

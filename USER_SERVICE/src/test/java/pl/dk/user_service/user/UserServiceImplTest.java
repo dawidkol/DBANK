@@ -214,18 +214,16 @@ class UserServiceImplTest {
         underTest.deleteUserById(userId);
 
         // Then
-        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).delete(userArgumentCaptor.capture());
-        User argumentCaptorValue = userArgumentCaptor.getValue();
         assertAll(() -> {
-            assertThat(argumentCaptorValue.getId()).isEqualTo(userId);
-            assertThat(argumentCaptorValue.getFirstName()).isEqualTo(firstName);
-            assertThat(argumentCaptorValue.getLastName()).isEqualTo(lastName);
-            assertThat(argumentCaptorValue.getEmail()).isEqualTo(email);
-            assertThat(argumentCaptorValue.getPassword()).isEqualTo(password);
-            assertThat(argumentCaptorValue.getPhone()).isEqualTo(phone);
-            assertThat(argumentCaptorValue.getDateOfBirth()).isEqualTo(dateOfBirth);
-            assertThat(argumentCaptorValue.getActive()).isEqualTo(active);
+        verify(userRepository).findById(userId);
+            assertThat(user.getId()).isEqualTo(userId);
+            assertThat(user.getFirstName()).isEqualTo(firstName);
+            assertThat(user.getLastName()).isEqualTo(lastName);
+            assertThat(user.getEmail()).isEqualTo(email);
+            assertThat(user.getPassword()).isEqualTo(password);
+            assertThat(user.getPhone()).isEqualTo(phone);
+            assertThat(user.getDateOfBirth()).isEqualTo(dateOfBirth);
+            assertThat(user.getActive()).isEqualTo(false);
         });
     }
 
