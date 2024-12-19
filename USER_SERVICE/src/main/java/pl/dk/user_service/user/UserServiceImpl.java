@@ -69,7 +69,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(String userId) {
-        return userRepository.findById(userId)
+        return userRepository.findByIdAndActiveIsTrue(userId)
                 .map(UserDtoMapper::map)
                 .orElseThrow(() -> new UserNotFoundException("User with id = %s not found".formatted(userId)));
     }
@@ -78,7 +78,9 @@ class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUserById(String userId) {
         userRepository.findById(userId)
-                .ifPresentOrElse(userRepository::delete, () -> {
+                .ifPresentOrElse(user -> {
+                    user.setActive(false);
+                }, () -> {
                     throw new UserNotFoundException("User with id = %s not found".formatted(userId));
                 });
     }
@@ -93,8 +95,8 @@ class UserServiceImpl implements UserService {
             SaveUserDto patchedData = this.applyPatch(prepareData, jsonMergePatch);
             User userToUpdate = UserDtoMapper.map(patchedData);
             userToUpdate.setId(userId);
+            userToUpdate.setActive(true);
             userRepository.save(userToUpdate);
-
         } catch (JsonProcessingException | JsonPatchException e) {
             throw new ServerException("Something goes wrong on application side, try again later");
         }

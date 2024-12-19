@@ -1,5 +1,6 @@
 package pl.dk.user_service.user;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -7,6 +8,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 
 import lombok.RequiredArgsConstructor;
+import pl.dk.user_service.notification.NotificationService;
 import pl.dk.user_service.user.dto.SaveUserDto;
 import pl.dk.user_service.user.dto.UserDto;
 
@@ -27,9 +29,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 class UserController {
 
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @PostMapping
-    public ResponseEntity<UserDto> registerUser(@RequestBody SaveUserDto saveUserDto) {
+    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody SaveUserDto saveUserDto) {
         UserDto userDto = userService.registerUser(saveUserDto);
         URI userUri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{userId}")
@@ -51,7 +54,7 @@ class UserController {
     }
 
     @PatchMapping("/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody JsonMergePatch jsonMergePatch) {
+    public ResponseEntity<?> updateUser(@PathVariable String userId, @Valid @RequestBody JsonMergePatch jsonMergePatch) {
         userService.updateUser(userId, jsonMergePatch);
         return ResponseEntity.noContent().build();
     }

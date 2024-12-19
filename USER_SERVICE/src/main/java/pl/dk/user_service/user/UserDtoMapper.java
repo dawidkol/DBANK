@@ -13,6 +13,7 @@ class UserDtoMapper {
                 .dateOfBirth(saveUserDto.dateOfBirth())
                 .password(saveUserDto.password())
                 .phone(saveUserDto.phone())
+                .active(true)
                 .build();
     }
 
@@ -23,6 +24,7 @@ class UserDtoMapper {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .active(user.getActive())
                 .build();
 
     }

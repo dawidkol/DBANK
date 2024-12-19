@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.transaction.annotation.Transactional;
 import pl.dk.user_service.kafka.KafkaConstants;
 import pl.dk.user_service.user.dto.UserDto;
 
@@ -41,6 +42,7 @@ import static pl.dk.user_service.kafka.KafkaConstants.USER_DTO_TRUSTED_PACKAGE;
 @DirtiesContext
 @TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}"})
+@Transactional
 public class UserControllerTest {
 
     @Autowired
@@ -75,7 +77,7 @@ public class UserControllerTest {
                   "lastName": "Doe",
                   "email": "john.doe@test.pl",
                   "phone": "+48666999666",
-                  "password": "securepassword123",
+                  "password": "Securepassword123$",
                   "dateOfBirth": "1990-01-01"
                 }
                 """;

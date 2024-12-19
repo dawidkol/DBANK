@@ -45,6 +45,7 @@ class UserServiceImplTest {
     String lastName;
     String password;
     LocalDate dateOfBirth;
+    Boolean active;
 
     SaveUserDto saveUserDto;
     User user;
@@ -58,10 +59,11 @@ class UserServiceImplTest {
         userId = UUID.randomUUID().toString();
         email = "john.doe@test.pl";
         phone = "+48666999666";
+        active = true;
 
         firstName = "John";
         lastName = "Doe";
-        password = "securepassword123";
+        password = "Securepassword123$";
         dateOfBirth = LocalDate.of(1990, 1, 1);
 
         saveUserDto = SaveUserDto.builder()
@@ -81,6 +83,7 @@ class UserServiceImplTest {
                 .phone(phone)
                 .password(password)
                 .dateOfBirth(dateOfBirth)
+                .active(active)
                 .build();
     }
 
@@ -101,15 +104,16 @@ class UserServiceImplTest {
         UserDto result = underTest.registerUser(saveUserDto);
 
         // Then
-        verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
-        verify(userRepository, times(1)).save(any(User.class));
-        assertAll(
-                () -> assertThat(result.userId()).isNotBlank(),
-                () -> assertThat(result.firstName()).isEqualTo(firstName),
-                () -> assertThat(result.lastName()).isEqualTo(lastName),
-                () -> assertThat(result.email()).isEqualTo(email),
-                () -> assertThat(result.phone()).isEqualTo(phone)
-        );
+        assertAll(() -> {
+            verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
+            verify(userRepository, times(1)).save(any(User.class));
+            assertThat(result.userId()).isNotBlank();
+            assertThat(result.firstName()).isEqualTo(firstName);
+            assertThat(result.lastName()).isEqualTo(lastName);
+            assertThat(result.email()).isEqualTo(email);
+            assertThat(result.phone()).isEqualTo(phone);
+            assertThat(result.active()).isEqualTo(active);
+        });
     }
 
     @Test
@@ -125,9 +129,12 @@ class UserServiceImplTest {
         UserConstraintException userConstraintException = assertThrows(UserConstraintException.class, () -> underTest.registerUser(saveUserDto));
 
         // Then
-        verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
-        assertThat(userConstraintException.getMessage()).contains(email);
-        assertThat(userConstraintException.getMessage()).contains(phone);
+        assertAll(() -> {
+            verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
+            assertThat(userConstraintException.getMessage()).contains(email);
+            assertThat(userConstraintException.getMessage()).contains(phone);
+        });
+
     }
 
     @Test
@@ -147,8 +154,10 @@ class UserServiceImplTest {
         UserConstraintException userConstraintException = assertThrows(UserConstraintException.class, () -> underTest.registerUser(saveUserDto));
 
         // Then
-        verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
-        assertThat(userConstraintException.getMessage()).contains(notExistingEmail);
+        assertAll(() -> {
+            verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
+            assertThat(userConstraintException.getMessage()).contains(notExistingEmail);
+        });
     }
 
     @Test
@@ -168,28 +177,31 @@ class UserServiceImplTest {
         UserConstraintException userConstraintException = assertThrows(UserConstraintException.class, () -> underTest.registerUser(saveUserDto));
 
         // Then
-        verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
-        assertThat(userConstraintException.getMessage()).contains(notExistingPhone);
+        assertAll(() -> {
+            verify(userRepository, times(1)).findByEmailOrPhone(email, phone);
+            assertThat(userConstraintException.getMessage()).contains(notExistingPhone);
+        });
     }
 
     @Test
     @DisplayName("It should get user by given userId")
     void itShouldGetUserById() {
         // Given
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndActiveIsTrue(userId)).thenReturn(Optional.of(user));
 
         // When
         UserDto result = underTest.getUserById(userId);
 
         // Then
-        verify(userRepository, times(1)).findById(userId);
-        assertAll(
-                () -> assertThat(result.userId()).isEqualTo(userId),
-                () -> assertThat(result.firstName()).isEqualTo(firstName),
-                () -> assertThat(result.lastName()).isEqualTo(lastName),
-                () -> assertThat(result.email()).isEqualTo(email),
-                () -> assertThat(result.phone()).isEqualTo(phone)
-        );
+        verify(userRepository, times(1)).findByIdAndActiveIsTrue(userId);
+        assertAll(() -> {
+            assertThat(result.userId()).isEqualTo(userId);
+            assertThat(result.firstName()).isEqualTo(firstName);
+            assertThat(result.lastName()).isEqualTo(lastName);
+            assertThat(result.email()).isEqualTo(email);
+            assertThat(result.phone()).isEqualTo(phone);
+            assertThat(result.active()).isEqualTo(active);
+        });
     }
 
     @Test
@@ -202,18 +214,17 @@ class UserServiceImplTest {
         underTest.deleteUserById(userId);
 
         // Then
-        ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).delete(userArgumentCaptor.capture());
-        User argumentCaptorValue = userArgumentCaptor.getValue();
-        assertAll(
-                () -> assertThat(argumentCaptorValue.getId()).isEqualTo(userId),
-                () -> assertThat(argumentCaptorValue.getFirstName()).isEqualTo(firstName),
-                () -> assertThat(argumentCaptorValue.getLastName()).isEqualTo(lastName),
-                () -> assertThat(argumentCaptorValue.getEmail()).isEqualTo(email),
-                () -> assertThat(argumentCaptorValue.getPassword()).isEqualTo(password),
-                () -> assertThat(argumentCaptorValue.getPhone()).isEqualTo(phone),
-                () -> assertThat(argumentCaptorValue.getDateOfBirth()).isEqualTo(dateOfBirth)
-        );
+        assertAll(() -> {
+        verify(userRepository).findById(userId);
+            assertThat(user.getId()).isEqualTo(userId);
+            assertThat(user.getFirstName()).isEqualTo(firstName);
+            assertThat(user.getLastName()).isEqualTo(lastName);
+            assertThat(user.getEmail()).isEqualTo(email);
+            assertThat(user.getPassword()).isEqualTo(password);
+            assertThat(user.getPhone()).isEqualTo(phone);
+            assertThat(user.getDateOfBirth()).isEqualTo(dateOfBirth);
+            assertThat(user.getActive()).isEqualTo(false);
+        });
     }
 
     @Test
@@ -259,14 +270,15 @@ class UserServiceImplTest {
         verify(userRepository).save(userArgumentCaptor.capture());
         User argumentCaptorValue = userArgumentCaptor.getValue();
 
-        assertAll(
-                () -> assertThat(argumentCaptorValue.getId()).isEqualTo(userId),
-                () -> assertThat(argumentCaptorValue.getFirstName()).isEqualTo(updateUser.firstName()),
-                () -> assertThat(argumentCaptorValue.getLastName()).isEqualTo(updateUser.lastName()),
-                () -> assertThat(argumentCaptorValue.getEmail()).isEqualTo(updateUser.email()),
-                () -> assertThat(argumentCaptorValue.getPhone()).isEqualTo(updateUser.phone()),
-                () -> assertThat(argumentCaptorValue.getPassword()).isEqualTo(updateUser.password()),
-                () -> assertThat(argumentCaptorValue.getDateOfBirth()).isEqualTo(updateUser.dateOfBirth())
-        );
+        assertAll(() -> {
+            assertThat(argumentCaptorValue.getId()).isEqualTo(userId);
+            assertThat(argumentCaptorValue.getFirstName()).isEqualTo(updateUser.firstName());
+            assertThat(argumentCaptorValue.getLastName()).isEqualTo(updateUser.lastName());
+            assertThat(argumentCaptorValue.getEmail()).isEqualTo(updateUser.email());
+            assertThat(argumentCaptorValue.getPhone()).isEqualTo(updateUser.phone());
+            assertThat(argumentCaptorValue.getPassword()).isEqualTo(updateUser.password());
+            assertThat(argumentCaptorValue.getDateOfBirth()).isEqualTo(updateUser.dateOfBirth());
+            assertThat(argumentCaptorValue.getDateOfBirth()).isEqualTo(updateUser.dateOfBirth());
+        });
     }
 }
