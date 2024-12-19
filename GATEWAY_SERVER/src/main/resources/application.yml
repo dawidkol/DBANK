@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: GATEWAY-SERVER
+  profiles:
+    active: dev
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8000/eureka
+
