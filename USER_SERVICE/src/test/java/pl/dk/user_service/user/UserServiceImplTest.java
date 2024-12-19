@@ -187,13 +187,13 @@ class UserServiceImplTest {
     @DisplayName("It should get user by given userId")
     void itShouldGetUserById() {
         // Given
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndActiveIsTrue(userId)).thenReturn(Optional.of(user));
 
         // When
         UserDto result = underTest.getUserById(userId);
 
         // Then
-        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findByIdAndActiveIsTrue(userId);
         assertAll(() -> {
             assertThat(result.userId()).isEqualTo(userId);
             assertThat(result.firstName()).isEqualTo(firstName);

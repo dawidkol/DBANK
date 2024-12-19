@@ -69,7 +69,7 @@ class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(String userId) {
-        return userRepository.findById(userId)
+        return userRepository.findByIdAndActiveIsTrue(userId)
                 .map(UserDtoMapper::map)
                 .orElseThrow(() -> new UserNotFoundException("User with id = %s not found".formatted(userId)));
     }

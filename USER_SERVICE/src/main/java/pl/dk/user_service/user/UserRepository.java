@@ -12,5 +12,6 @@ import pl.dk.user_service.user.repositoryDto.EmailPhoneDto;
 interface UserRepository extends JpaRepository<User, String>{
 
     Optional<EmailPhoneDto> findByEmailOrPhone(String email, String phone);
-    
+    Optional<User> findByIdAndActiveIsTrue(String id);
+
 }
