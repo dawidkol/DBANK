@@ -1,13 +1,18 @@
 package pl.dk.transfer_service.transfer;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.dk.transfer_service.exception.AccountNotExistsException;
 import pl.dk.transfer_service.exception.InsufficientBalanceException;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
+import pl.dk.transfer_service.kafka.KafkaConstants;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
+import pl.dk.transfer_service.transfer.dtos.TransferEvent;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
 @Service
@@ -16,6 +21,7 @@ class TransferServiceImpl implements TransferService {
 
     private final TransferRepository transferRepository;
     private final AccountFeignClient accountFeignClient;
+    private final KafkaTemplate<String, TransferEvent> kafkaTemplate;
 
     @Override
     @Transactional
@@ -23,6 +29,8 @@ class TransferServiceImpl implements TransferService {
         AccountDto senderAccountDto = validateRequest(createTransferDto);
         Transfer transferToSave = setTransferObjectToSave(createTransferDto, senderAccountDto);
         Transfer savedTransfer = transferRepository.save(transferToSave);
+        TransferEvent transferEvent = TransferDtoMapper.mapToEvent(savedTransfer);
+        kafkaTemplate.send(KafkaConstants.TOPIC_REGISTRATION, transferEvent.transferId(), transferEvent);
         return TransferDtoMapper.map(savedTransfer);
     }
 
@@ -36,6 +44,9 @@ class TransferServiceImpl implements TransferService {
     private AccountDto validateRequest(CreateTransferDto createTransferDto) {
         ResponseEntity<AccountDto> sender = accountFeignClient.getAccountById(createTransferDto.senderAccountNumber());
         ResponseEntity<AccountDto> recipient = accountFeignClient.getAccountById(createTransferDto.recipientAccountNumber());
+        if (sender.getStatusCode() == HttpStatus.NOT_FOUND || recipient.getStatusCode() == HttpStatus.NOT_FOUND ) {
+            throw new AccountNotExistsException("Account with id: %s not exists");
+        }
         AccountDto senderAccountDto = sender.getBody();
         assert senderAccountDto != null;
         int i = senderAccountDto.balance().compareTo(createTransferDto.amount());

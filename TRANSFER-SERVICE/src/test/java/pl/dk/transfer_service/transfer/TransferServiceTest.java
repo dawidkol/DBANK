@@ -9,11 +9,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import pl.dk.transfer_service.exception.InsufficientBalanceException;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
+import pl.dk.transfer_service.transfer.dtos.TransferEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,6 +29,8 @@ class TransferServiceTest {
     private TransferRepository transferRepository;
     @Mock
     private AccountFeignClient accountFeignClient;
+    @Mock
+    KafkaTemplate<String, TransferEvent> kafkaTemplate;
     private TransferService underTest;
     private AutoCloseable autoCloseable;
 
@@ -49,7 +53,7 @@ class TransferServiceTest {
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
-        underTest = new TransferServiceImpl(transferRepository, accountFeignClient);
+        underTest = new TransferServiceImpl(transferRepository, accountFeignClient, kafkaTemplate);
 
         senderUserId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
         senderAccountNumber = "00000000000000000000000000";
@@ -117,11 +121,15 @@ class TransferServiceTest {
         // Then
         assertAll(
                 () -> {
-                    Mockito.verify(accountFeignClient, Mockito.times(2)).getAccountById(Mockito.any(String.class));
-                    Mockito.verify(transferRepository, Mockito.times(1)).save(transferArgumentCaptor.capture());
+                    Mockito.verify(accountFeignClient, Mockito.times(2))
+                            .getAccountById(Mockito.any(String.class));
+                    Mockito.verify(transferRepository, Mockito.times(1))
+                            .save(transferArgumentCaptor.capture());
                     assertNotNull(result.transferId());
-                    assertTrue(result.senderAccountNumber().contains(privacy), "The sender account number should be masked for privacy.");
-                    assertTrue(result.recipientAccountNumber().contains(privacy), "The sender account number should be masked for privacy.");
+                    assertTrue(result.senderAccountNumber().contains(privacy),
+                            "The sender account number should be masked for privacy.");
+                    assertTrue(result.recipientAccountNumber().contains(privacy),
+                            "The sender account number should be masked for privacy.");
                     assertEquals(amount, result.amount());
                     assertEquals(CurrencyType.PLN.toString(), result.currencyType());
                     assertEquals(transferDate, result.transferDate());

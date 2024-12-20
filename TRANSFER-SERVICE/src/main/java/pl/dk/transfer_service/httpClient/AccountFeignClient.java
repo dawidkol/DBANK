@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 
-@FeignClient(value = "user-service", fallback = AccountFallback.class, dismiss404 = true)
+@FeignClient(value = "accounts-service", fallback = AccountFallback.class, dismiss404 = true)
 public interface AccountFeignClient {
 
-    @GetMapping("/{accountId}")
+    @GetMapping("/accounts/{accountId}")
     ResponseEntity<AccountDto> getAccountById(@PathVariable String accountId);
 
 }

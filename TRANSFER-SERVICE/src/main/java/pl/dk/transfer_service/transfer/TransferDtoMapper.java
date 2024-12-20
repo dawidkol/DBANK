@@ -1,7 +1,7 @@
 package pl.dk.transfer_service.transfer;
 
-import pl.dk.transfer_service.exception.BadCurrencyException;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
+import pl.dk.transfer_service.transfer.dtos.TransferEvent;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
 class TransferDtoMapper {
@@ -36,5 +36,17 @@ class TransferDtoMapper {
     private static String hideAccountNumber(String accountNumber) {
         String substring = accountNumber.substring(22);
         return "**********************" + substring;
+    }
+
+    public static TransferEvent mapToEvent(Transfer transfer) {
+        return TransferEvent.builder()
+                .transferId(transfer.getId())
+                .senderAccountNumber(hideAccountNumber(transfer.getSenderAccountNumber()))
+                .recipientAccountNumber(hideAccountNumber(transfer.getRecipientAccountNumber()))
+                .amount(transfer.getAmount())
+                .currencyType(transfer.getCurrencyType().name())
+                .transferDate(transfer.getTransferDate())
+                .transferStatus(transfer.getTransferStatus().name())
+                .build();
     }
 }
