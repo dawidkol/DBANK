@@ -3,10 +3,10 @@ package pl.dk.transfer_service.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST)
-public class InsufficientBalanceException extends RuntimeException {
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class TransferNotFoundException extends RuntimeException {
 
-    public InsufficientBalanceException(String message) {
+    public TransferNotFoundException(String message) {
         super(message);
     }
 }

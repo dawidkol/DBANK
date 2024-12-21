@@ -5,14 +5,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
-import static pl.dk.transfer_service.kafka.KafkaConstants.TOPIC_REGISTRATION;
+import static pl.dk.transfer_service.kafka.KafkaConstants.CREATE_TRANSFER_EVENT;
 
 @Configuration
 class KafkaConfig {
 
     @Bean
     public NewTopic registrationEvents() {
-        return TopicBuilder.name(TOPIC_REGISTRATION)
+        return TopicBuilder.name(CREATE_TRANSFER_EVENT)
                 .partitions(3)
                 .replicas(3)
                 .build();

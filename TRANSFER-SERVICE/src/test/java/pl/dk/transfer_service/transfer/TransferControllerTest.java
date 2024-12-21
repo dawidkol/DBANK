@@ -27,6 +27,7 @@ import pl.dk.transfer_service.httpClient.AccountFeignClient;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.kafka.KafkaConstants;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
+import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static pl.dk.transfer_service.kafka.KafkaConstants.ACCOUNT_DTO_TRUSTED_PACKAGE;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@EmbeddedKafka(topics = KafkaConstants.TOPIC_REGISTRATION)
+@EmbeddedKafka(topics = KafkaConstants.CREATE_TRANSFER_EVENT)
 @DirtiesContext
 @TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}"})
@@ -118,32 +119,46 @@ class TransferControllerTest {
                 .thenReturn(ResponseEntity.of(Optional.of(recipientDto)));
 
         // When
-        ResponseEntity<TransferDtoMapper> transferDtoMapperResponseEntity404 = testRestTemplate.postForEntity(
+        ResponseEntity<TransferDto> transferDtoResponseEntity404 = testRestTemplate.postForEntity(
                 "/transfers",
                 createTransferDto,
-                TransferDtoMapper.class);
+                TransferDto.class);
 
         // Then
         assertAll(() -> {
                     Mockito.verify(accountFeignClient, Mockito.times(2)).getAccountById(Mockito.any(String.class));
-                    assertTrue(transferDtoMapperResponseEntity404.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND));
+                    assertTrue(transferDtoResponseEntity404.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND));
                 }
         );
 
         // 2. User wants to create transfer with valid data. Expected status code: 201 CREATED
         // When
-        ResponseEntity<TransferDtoMapper> transferDtoMapperResponseEntity = testRestTemplate.postForEntity(
+        ResponseEntity<TransferDto> transferDtoResponseEntity = testRestTemplate.postForEntity(
                 "/transfers",
                 createTransferDto,
-                TransferDtoMapper.class);
+                TransferDto.class);
 
         // Then
         ConsumerRecords<String, AccountDto> records = KafkaTestUtils.getRecords(consumer);
         assertAll(() -> {
                     Mockito.verify(accountFeignClient, Mockito.times(4)).getAccountById(Mockito.any(String.class));
-                    assertTrue(transferDtoMapperResponseEntity.getStatusCode().isSameCodeAs(HttpStatus.CREATED));
+                    assertTrue(transferDtoResponseEntity.getStatusCode().isSameCodeAs(HttpStatus.CREATED));
                     assertEquals(1, records.count());
                 }
         );
+
+        // 3. User wants to get information about transfer: Expected status code: 200 OK
+        String transferId = transferDtoResponseEntity.getBody().transferId();
+        ResponseEntity<TransferDto> transferDtoResponseEntity200 = testRestTemplate.getForEntity(
+                "/transfers/{transferId}",
+                TransferDto.class,
+                transferId);
+
+        TransferDto transferDto200 = transferDtoResponseEntity200.getBody();
+        assertAll(() -> {
+            assertTrue(transferDtoResponseEntity200.getStatusCode().isSameCodeAs(HttpStatus.OK));
+        });
+
+
     }
 }
