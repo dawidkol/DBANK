@@ -1,6 +1,6 @@
 package pl.dk.transfer_service.transfer;
 
-enum TransferStatus {
+public enum TransferStatus {
     PENDING,
     COMPLETED,
     FAILED,

@@ -41,8 +41,8 @@ class TransferDtoMapper {
     public static TransferEvent mapToEvent(Transfer transfer) {
         return TransferEvent.builder()
                 .transferId(transfer.getId())
-                .senderAccountNumber(hideAccountNumber(transfer.getSenderAccountNumber()))
-                .recipientAccountNumber(hideAccountNumber(transfer.getRecipientAccountNumber()))
+                .senderAccountNumber(transfer.getSenderAccountNumber())
+                .recipientAccountNumber(transfer.getRecipientAccountNumber())
                 .amount(transfer.getAmount())
                 .currencyType(transfer.getCurrencyType().name())
                 .transferDate(transfer.getTransferDate())

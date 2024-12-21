@@ -27,4 +27,10 @@ class TransferController {
         return ResponseEntity.created(uri).body(transfer);
     }
 
+    @GetMapping("/{transferId}")
+    public ResponseEntity<TransferDto> getTransferById(@PathVariable String transferId) {
+        TransferDto transferById = transferService.getTransferById(transferId);
+        return ResponseEntity.ok(transferById);
+    }
+
 }
