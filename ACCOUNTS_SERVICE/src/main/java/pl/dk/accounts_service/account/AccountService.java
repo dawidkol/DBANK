@@ -5,7 +5,7 @@ import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 
 import java.math.BigDecimal;
 
-interface AccountService {
+public interface AccountService {
 
     AccountDto createAccount(CreateAccountDto createAccountDto);
     AccountDto getAccountById(String accountId);

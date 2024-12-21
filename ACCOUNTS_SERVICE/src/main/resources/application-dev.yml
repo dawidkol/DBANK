@@ -17,6 +17,25 @@ spring:
       circuitbreaker:
         enabled: true
 
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.use.type.headers: false
+      group-id: transfer-events-listener-group
+    listener:
+      concurrency: 3
+
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        retries: 3
+        retry-backoff-ms: 5000
+
   datasource:
     url: jdbc:h2:mem:test
 
