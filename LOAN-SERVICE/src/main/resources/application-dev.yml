@@ -32,6 +32,10 @@ spring:
     enabled: true
     execute-in-transaction: true
 
+  modulith:
+    events:
+      republish-outstanding-events-on-restart: true
+
 logging:
   level:
     pl:
