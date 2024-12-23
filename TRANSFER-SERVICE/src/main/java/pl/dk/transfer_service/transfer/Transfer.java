@@ -1,6 +1,7 @@
 package pl.dk.transfer_service.transfer;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,15 +20,24 @@ class Transfer extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+    @Pattern(regexp = "\\d{26}")
     private String senderAccountNumber;
+    @Pattern(regexp = "\\d{26}")
     private String recipientAccountNumber;
+    @NotNull
+    @Positive
     private BigDecimal amount;
     @Enumerated(value = EnumType.STRING)
+    @NotNull
     private CurrencyType currencyType;
+    @FutureOrPresent
     private LocalDateTime transferDate;
     @Enumerated(value = EnumType.STRING)
     private TransferStatus transferStatus;
+    @NotBlank
+    @Size(min = 5, max = 300)
     private String description;
+    @NotNull
     private BigDecimal balanceAfterTransfer;
 
     @Builder
