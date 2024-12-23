@@ -1,0 +1,39 @@
+server:
+  port: 8084
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  datasource:
+    url: jdbc:h2:mem:test
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+      open-in-view: false
+
+  flyway:
+    locations:
+      - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+logging:
+  level:
+    pl:
+      dk:
+        loan-service: TRACE
