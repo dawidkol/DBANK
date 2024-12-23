@@ -1,12 +1,16 @@
 package pl.dk.accounts_service.account;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
+import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.account_transaction.AccountTransaction;
+import pl.dk.accounts_service.account_transaction.AccountTransactionService;
 import pl.dk.accounts_service.exception.*;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
@@ -20,6 +24,8 @@ class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final AccountNumberGenerator accountNumberGenerator;
     private final UserFeignClient userFeignClient;
+    private final AccountTransactionService accountTransactionService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -63,13 +69,24 @@ class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue) {
-        return accountRepository.findById(accountId)
+        AccountDto accountDto = accountRepository.findById(accountId)
                 .map(account -> {
                     isAccountActive(account);
                     updateAccountBalance(updateByValue, account);
                     return AccountDtoMapper.map(account);
                 })
-                .orElseThrow(() -> new AccountNotExistsException("Account with id: %s not exists"));
+                .orElseThrow(() ->
+                        new AccountNotExistsException("Account with id: %s not exists"));
+        buildAndPublishAccountEvent(updateByValue, accountDto.accountNumber());
+        return accountDto;
+    }
+
+    private void buildAndPublishAccountEvent(BigDecimal updateByValue, String accountId) {
+        AccountEventPublisher accountEventPublisher = AccountEventPublisher.builder()
+                .updatedByValue(updateByValue)
+                .accountId(accountId)
+                .build();
+        applicationEventPublisher.publishEvent(accountEventPublisher);
     }
 
     private void updateAccountBalance(BigDecimal updateByValue, Account account) {
@@ -89,4 +106,11 @@ class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Override
+    public BigDecimal getAverageBalance(String userId) {
+//        accountRepository.findAllByUserId(userId)
+//                .stream()
+//                .
+        return null;
+    }
 }

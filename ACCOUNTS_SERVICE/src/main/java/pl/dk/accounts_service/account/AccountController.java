@@ -1,16 +1,14 @@
 package pl.dk.accounts_service.account;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Digits;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.account.dtos.UpdateAccountBalance;
 
-import java.math.BigDecimal;
 import java.net.URI;
 
 @RestController
@@ -43,8 +41,9 @@ class AccountController {
     }
 
     @PatchMapping("/{accountId}")
-    public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @RequestBody BigDecimal updateByValue) {
-        AccountDto accountDto = accountService.updateAccountBalance(accountId, updateByValue);
+    public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @RequestBody UpdateAccountBalance updateAccountBalance) {
+        AccountDto accountDto = accountService.updateAccountBalance(accountId, updateAccountBalance.updateByValue());
         return ResponseEntity.ok(accountDto);
     }
+
 }

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-class Account extends BaseEntity{
+public class Account extends BaseEntity{
 
     @Id
     private String accountNumber;

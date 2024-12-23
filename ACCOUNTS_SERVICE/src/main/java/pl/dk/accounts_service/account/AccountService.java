@@ -11,4 +11,5 @@ public interface AccountService {
     AccountDto getAccountById(String accountId);
     void deleteAccountById(String accountId);
     AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue);
+    BigDecimal getAverageBalance(String userId);
 }
