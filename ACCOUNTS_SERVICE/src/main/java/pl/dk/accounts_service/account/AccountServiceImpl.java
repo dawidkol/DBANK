@@ -9,8 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-import pl.dk.accounts_service.account_transaction.AccountTransaction;
-import pl.dk.accounts_service.account_transaction.AccountTransactionService;
 import pl.dk.accounts_service.exception.*;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;

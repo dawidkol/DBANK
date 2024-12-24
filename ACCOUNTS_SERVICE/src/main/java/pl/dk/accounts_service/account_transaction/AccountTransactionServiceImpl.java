@@ -8,10 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.Account;
 import pl.dk.accounts_service.account.AccountRepository;
 import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
+import pl.dk.accounts_service.account_transaction.dtos.AccountTransactionCalculationDto;
 import pl.dk.accounts_service.account_transaction.dtos.AccountTransactionDto;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,8 +33,9 @@ class AccountTransactionServiceImpl implements AccountTransactionService {
         return AccountTransactionDtoMapper.map(savedTransaction);
     }
 
+    @Override
     @ApplicationModuleListener
-    void onUpdateEvent(AccountEventPublisher event) {
+    public void onTransactionEvent(AccountEventPublisher event) {
         log.info("Starting saving account transaction for accountId: {}", event.accountId());
         Account account = accountRepository.findById(event.accountId())
                 .orElseThrow(() ->
@@ -50,4 +56,60 @@ class AccountTransactionServiceImpl implements AccountTransactionService {
                 .account(account)
                 .build();
     }
+
+    @Override
+    public BigDecimal getAverageBalanceFromDeclaredMonths(String userId, int declaredMonths) {
+        InitDate initDate = getInitDate(declaredMonths);
+        double doubleAverage = getAverage(userId, initDate);
+        return BigDecimal.valueOf(doubleAverage);
+    }
+
+    private double getAverage(String userId, InitDate initDate) {
+        return accountTransactionRepository.findAllByAccount_UserIdAndTransactionDateIsBetween(
+                        userId,
+                        initDate.startDate(),
+                        initDate.endDate())
+                .stream()
+                .collect(Collectors.groupingBy(
+                        transaction ->
+                                transaction.transactionDate()
+                                        .format(DateTimeFormatter.ofPattern("yyyy-MM"))))
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    return entry.getValue()
+                            .stream()
+                            .map(AccountTransactionCalculationDto::amount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add).divide(BigDecimal.valueOf(entry.getValue().size()));
+                })).values()
+                .stream()
+                .mapToDouble(BigDecimal::doubleValue)
+                .average()
+                .orElseThrow();
+    }
+
+    private InitDate getInitDate(int declaredMonths) {
+        LocalDateTime initEndDate = LocalDateTime.now().minusMonths(1);
+        LocalDateTime initStartDate = initEndDate.minusMonths(declaredMonths);
+
+        LocalDateTime endDate = LocalDateTime.of(
+                initEndDate.getYear(),
+                initEndDate.getMonth(),
+                initEndDate.getMonth().maxLength(),
+                23,
+                59,
+                59);
+        LocalDateTime startDate = LocalDateTime.of(
+                initStartDate.getYear(),
+                initStartDate.getMonth(),
+                initStartDate.getMonth().minLength(),
+                0,
+                0,
+                0);
+        return new InitDate(endDate, startDate);
+    }
+
+    private record InitDate(LocalDateTime endDate, LocalDateTime startDate) {
+    }
+
 }
