@@ -23,9 +23,14 @@ public record CreateLoanDto(
         LocalDate startDate,
         @Future
         LocalDate endDate,
-        @PositiveOrZero
         @NotBlank
         @Size(min = 10, max = 300)
-        String description
+        String description,
+        @NotNull
+        BigDecimal avgIncome,
+        @NotNull
+        BigDecimal avgExpenses,
+        @NotNull
+        BigDecimal existingLoanRepayments
 ) {
 }

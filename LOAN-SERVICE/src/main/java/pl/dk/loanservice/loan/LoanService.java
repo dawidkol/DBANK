@@ -8,4 +8,5 @@ interface LoanService {
     LoanDto createLoan(CreateLoanDto createLoanDto);
 
     LoanDto getLoanById(String loanId);
+
 }
