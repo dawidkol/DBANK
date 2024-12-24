@@ -24,7 +24,6 @@ class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final AccountNumberGenerator accountNumberGenerator;
     private final UserFeignClient userFeignClient;
-    private final AccountTransactionService accountTransactionService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
@@ -106,11 +105,4 @@ class AccountServiceImpl implements AccountService {
         }
     }
 
-    @Override
-    public BigDecimal getAverageBalance(String userId) {
-//        accountRepository.findAllByUserId(userId)
-//                .stream()
-//                .
-        return null;
-    }
 }
