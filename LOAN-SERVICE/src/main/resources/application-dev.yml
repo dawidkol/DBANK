@@ -1,0 +1,61 @@
+server:
+  port: 8084
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  datasource:
+    url: jdbc:h2:mem:test
+
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+      open-in-view: false
+
+  flyway:
+    locations:
+      - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+  modulith:
+    events:
+      republish-outstanding-events-on-restart: true
+  h2:
+    console:
+      enabled: true
+
+logging:
+  level:
+    pl:
+      dk:
+        loan-service: TRACE
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 2
+
