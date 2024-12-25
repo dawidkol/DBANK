@@ -27,10 +27,13 @@ public record CreateLoanDto(
         @Size(min = 10, max = 300)
         String description,
         @NotNull
+        @Positive
         BigDecimal avgIncome,
         @NotNull
+        @Positive
         BigDecimal avgExpenses,
         @NotNull
+        @PositiveOrZero
         BigDecimal existingLoanRepayments
 ) {
 }
