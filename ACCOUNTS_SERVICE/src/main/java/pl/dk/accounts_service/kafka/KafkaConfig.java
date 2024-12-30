@@ -11,8 +11,16 @@ import static pl.dk.accounts_service.kafka.KafkaConstants.*;
 class KafkaConfig {
 
     @Bean
-    public NewTopic registrationEvents() {
+    public NewTopic processTransferTopic() {
         return TopicBuilder.name(PROCESS_TRANSFER_EVENT)
+                .partitions(3)
+                .replicas(3)
+                .build();
+    }
+
+    @Bean
+    public NewTopic loanAccountCreated() {
+        return TopicBuilder.name(LOAN_ACCOUNT_CREATED)
                 .partitions(3)
                 .replicas(3)
                 .build();
