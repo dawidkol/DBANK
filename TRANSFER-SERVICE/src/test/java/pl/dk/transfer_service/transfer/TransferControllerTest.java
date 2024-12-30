@@ -12,6 +12,9 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -97,7 +100,7 @@ class TransferControllerTest {
                 .recipientAccountNumber(recipientAccount)
                 .amount(BigDecimal.valueOf(1500.50))
                 .currencyType("PLN")
-                .transferDate(LocalDateTime.parse("2024-12-19T14:30:00"))
+                .transferDate(LocalDateTime.now().plusMonths(1))
                 .description("Payment for invoice #12345")
                 .build();
     }
@@ -119,10 +122,12 @@ class TransferControllerTest {
                 .thenReturn(ResponseEntity.of(Optional.of(recipientDto)));
 
         // When
-        ResponseEntity<TransferDto> transferDtoResponseEntity404 = testRestTemplate.postForEntity(
+        ResponseEntity<Object> transferDtoResponseEntity404 = testRestTemplate.exchange(
                 "/transfers",
-                createTransferDto,
-                TransferDto.class);
+                HttpMethod.POST,
+                new HttpEntity<>(createTransferDto),
+                new ParameterizedTypeReference<>() {
+                });
 
         // Then
         assertAll(() -> {
