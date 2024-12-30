@@ -8,8 +8,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 import pl.dk.accounts_service.account.dtos.UpdateAccountBalance;
+import pl.dk.accounts_service.constants.PagingAndSorting;
 
 import java.net.URI;
+import java.util.List;
+
+import static pl.dk.accounts_service.constants.PagingAndSorting.*;
+import static pl.dk.accounts_service.constants.PagingAndSorting.SIZE_DEFAULT;
 
 @RestController
 @RequestMapping("/accounts")
@@ -44,6 +49,14 @@ class AccountController {
     public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @RequestBody UpdateAccountBalance updateAccountBalance) {
         AccountDto accountDto = accountService.updateAccountBalance(accountId, updateAccountBalance.updateByValue());
         return ResponseEntity.ok(accountDto);
+    }
+
+    @GetMapping("/{userId}/all")
+    public ResponseEntity<List<AccountDto>> getAllUserAccounts(@PathVariable String userId,
+                                                               @RequestParam(required = false, defaultValue = PAGE_DEFAULT) int page,
+                                                               @RequestParam(required = false, defaultValue = SIZE_DEFAULT) int size) {
+        List<AccountDto> allUserAccounts = accountService.getAllUserAccounts(userId, page, size);
+        return ResponseEntity.ok(allUserAccounts);
     }
 
 }

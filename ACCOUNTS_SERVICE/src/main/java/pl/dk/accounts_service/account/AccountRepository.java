@@ -1,11 +1,11 @@
 package pl.dk.accounts_service.account;
 
-import org.reactivestreams.Publisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import pl.dk.accounts_service.account.dtos.AccountNumberDto;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +13,6 @@ import java.util.Optional;
 public interface AccountRepository extends JpaRepository<Account, String> {
 
     Optional<AccountNumberDto> findByAccountNumber(String accountNumber);
-    List<Account> findAllByUserId(String userId);
+    Page<Account> findAllByUserId(String userId, Pageable pageable);
 
 }
