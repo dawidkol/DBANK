@@ -13,6 +13,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
@@ -36,10 +38,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_PAGE;
 import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_SIZE;
+import static pl.dk.loanservice.kafka.KafkaConstants.LOAN_ACCOUNT_CREATED;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"eureka.client.enabled=false"})
 @Transactional
+@EmbeddedKafka(topics = LOAN_ACCOUNT_CREATED)
+@TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"})
 class LoanControllerTest {
 
     @Autowired
