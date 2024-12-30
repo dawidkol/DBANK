@@ -10,6 +10,8 @@ import java.time.LocalDate;
 
 @Builder
 public record CreateLoanDto(
+
+        @NotNull
         @NotBlank
         @UUID
         String userId,
@@ -20,10 +22,13 @@ public record CreateLoanDto(
         @NotNull
         BigDecimal interestRate,
         @FutureOrPresent
+        @NotNull
         LocalDate startDate,
         @Future
+        @NotNull
         LocalDate endDate,
         @NotBlank
+        @NotNull
         @Size(min = 10, max = 300)
         String description,
         @NotNull
