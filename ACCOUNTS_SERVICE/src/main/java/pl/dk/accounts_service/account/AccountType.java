@@ -5,5 +5,6 @@ public enum AccountType {
     CHECKING,
     BUSINESS,
     JOINT,
-    CREDIT
+    CREDIT,
+    LOAN
 }

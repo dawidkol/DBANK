@@ -24,7 +24,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.use.type.headers: false
-      group-id: transfer-events-listener-group
+      group-id: account-service-events-listener-group
     listener:
       concurrency: 3
 

@@ -1,5 +1,6 @@
 package pl.dk.loanservice.loan;
 
+import kafka.Kafka;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,27 +9,42 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import pl.dk.loanservice.constants.PagingAndSorting;
 import pl.dk.loanservice.credit.CreditScoreCalculator;
+import pl.dk.loanservice.error.LoanAccountNumberException;
 import pl.dk.loanservice.exception.LoanNotExistsException;
+import pl.dk.loanservice.exception.PayInstallmentException;
 import pl.dk.loanservice.exception.UserNotFoundException;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
+import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
 import pl.dk.loanservice.httpClient.UserServiceFeignClient;
 import pl.dk.loanservice.httpClient.dtos.UserDto;
-import pl.dk.loanservice.loan.dtos.CreateLoanDto;
-import pl.dk.loanservice.loan.dtos.LoanDto;
-import pl.dk.loanservice.loan.dtos.LoanEvent;
+import pl.dk.loanservice.loan.dtos.*;
+import pl.dk.loanservice.loanDetails.LoanDetails;
+import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
+import scala.Int;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static pl.dk.loanservice.constants.PagingAndSorting.*;
+import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_SIZE;
 
-class LoanServiceImplTest {
+class LoanDetailsServiceImplTest {
 
     @Mock
     private LoanRepository loanRepository;
@@ -40,6 +56,12 @@ class LoanServiceImplTest {
     private UserServiceFeignClient userServiceFeignClient;
     @Mock
     private CreditScoreCalculator creditScoreCalculator;
+    @Mock
+    private KafkaTemplate<String, CreateLoanAccountDto> kafkaTemplate;
+    @Mock
+    private TransferServiceFeignClient transferServiceFeignClient;
+    @Mock
+    LoanDetailsRepository loanDetailsRepository;
 
     private LoanService underTest;
 
@@ -66,11 +88,14 @@ class LoanServiceImplTest {
     String firstName;
     String lastName;
 
+    LoanDetails loanDetails;
+    CreateTransferDto transfer;
+
 
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
-        underTest = new LoanServiceImpl(loanRepository, applicationEventPublisher, accountServiceFeignClient, userServiceFeignClient, creditScoreCalculator);
+        underTest = new LoanServiceImpl(loanRepository, applicationEventPublisher, accountServiceFeignClient, userServiceFeignClient, creditScoreCalculator, kafkaTemplate, transferServiceFeignClient, loanDetailsRepository);
         userId = "550e8400-e29b-41d4-a716-446655440000";
         amount = BigDecimal.valueOf(5000);
         startDate = LocalDate.now().plusMonths(1);
@@ -120,6 +145,23 @@ class LoanServiceImplTest {
                 .lastName(lastName)
                 .email(email)
                 .phone(phone)
+                .build();
+
+
+        String accountNumber = "65432109876543210987654321";
+        loanDetails = LoanDetails.builder()
+                .id(UUID.randomUUID().toString())
+                .loan(loan)
+                .loanAccountNumber(accountNumber)
+                .build();
+
+        transfer = CreateTransferDto.builder()
+                .senderAccountNumber("12345678901234567890123456")
+                .recipientAccountNumber(accountNumber)
+                .amount(BigDecimal.valueOf(5000.00))
+                .currencyType("USD")
+                .transferDate(LocalDateTime.now().plusMonths(1))
+                .description("Payment for loan")
                 .build();
     }
 
@@ -292,4 +334,145 @@ class LoanServiceImplTest {
             Mockito.verify(accountServiceFeignClient, Mockito.times(1)).getAvgLast12Moths(userId);
         });
     }
+
+    @Test
+    @DisplayName("it should return all user loans")
+    void itShouldReturnAllUserLoans() {
+        // Given
+        Loan loan1 = Loan.builder()
+                .id(UUID.randomUUID().toString())
+                .userId(userId)
+                .amount(BigDecimal.valueOf(10000.00))
+                .interestRate(BigDecimal.valueOf(3.5))
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusYears(5))
+                .remainingAmount(BigDecimal.valueOf(10000.00))
+                .status(LoanStatus.PENDING)
+                .description("Personal loan for home renovation.")
+                .build();
+
+        Loan loan2 = Loan.builder()
+                .id(UUID.randomUUID().toString())
+                .userId(userId)
+                .amount(BigDecimal.valueOf(5000.00))
+                .interestRate(BigDecimal.valueOf(4.2))
+                .startDate(LocalDate.now().minusMonths(3))
+                .endDate(LocalDate.now().plusYears(2))
+                .remainingAmount(BigDecimal.valueOf(4500.00))
+                .status(LoanStatus.ACTIVE)
+                .description("Short-term loan for car repair expenses.")
+                .build();
+
+        Loan loan3 = Loan.builder()
+                .id(UUID.randomUUID().toString())
+                .userId(userId)
+                .amount(BigDecimal.valueOf(25000.00))
+                .interestRate(BigDecimal.valueOf(5.0))
+                .startDate(LocalDate.now().minusYears(1))
+                .endDate(LocalDate.now().plusYears(10))
+                .remainingAmount(BigDecimal.valueOf(20000.00))
+                .status(LoanStatus.ACTIVE)
+                .description("Long-term loan for business expansion.")
+                .build();
+
+        int page = Integer.parseInt(DEFAULT_PAGE);
+        int size = Integer.parseInt(DEFAULT_SIZE);
+
+        PageRequest pageRequest = PageRequest.of(page - 1 , size);
+        PageImpl<Loan> pageImpl = new PageImpl<>(List.of(loan1, loan2, loan3));
+
+        Mockito.when(loanRepository.findAllByUserId(userId, pageRequest)).thenReturn(pageImpl);
+
+        // When
+        List<LoanDto> result = underTest.getAllUsersLoans(userId, page, size);
+
+        // Then
+        assertAll(() -> {
+            Mockito.verify(loanRepository, Mockito.times(1)).findAllByUserId(userId, pageRequest);
+            assertEquals(3, result.size());
+            assertThat(result).hasOnlyElementsOfType(LoanDto.class);
+        });
+    }
+
+    @Test
+    @DisplayName("It should pay installment successfully")
+    void itShouldPayInstallmentSuccessfully() {
+        // Given
+        Mockito.when(loanDetailsRepository.findByLoan_id(loan.getId())).thenReturn(Optional.of(loanDetails));
+        Mockito.when(transferServiceFeignClient.createTransfer(transfer)).thenReturn(ResponseEntity.status(201).build());
+
+        // When
+        underTest.payInstallment(loan.getId(), transfer);
+
+        // Then
+        assertAll(() -> {
+            Mockito.verify(loanDetailsRepository, Mockito.times(1)).findByLoan_id(any());
+            Mockito.verify(transferServiceFeignClient, Mockito.times(1)).createTransfer(any());
+        });
+    }
+
+    @Test
+    @DisplayName("It should throw LoanNotExists exception")
+    void itShouldThrowLoanNotExistsException() {
+        // Given
+        Mockito.when(loanDetailsRepository.findByLoan_id(loan.getId())).thenReturn(Optional.empty());
+
+        // When Then
+        assertAll(() -> {
+            assertThrows(LoanNotExistsException.class,
+                    () -> underTest.payInstallment(loan.getId(), any(CreateTransferDto.class)));
+            Mockito.verify(loanDetailsRepository, Mockito.times(1)).findByLoan_id(loan.getId());
+
+        });
+    }
+
+    @Test
+    @DisplayName("It should throw LoanAccountNumberException ")
+    void itShouldThrowLoanAccountNumberException() {
+        // Given
+        String accountNumberLoanDetails = "00000000000000000000000000";
+        String accountNumberCreateTransferDto = "65432109876543210987654321";
+
+        LoanDetails loanDetails = LoanDetails.builder()
+                .id(UUID.randomUUID().toString())
+                .loan(loan)
+                .loanAccountNumber(accountNumberLoanDetails)
+                .build();
+
+        CreateTransferDto transfer = CreateTransferDto.builder()
+                .senderAccountNumber("12345678901234567890123456")
+                .recipientAccountNumber(accountNumberCreateTransferDto)
+                .amount(BigDecimal.valueOf(5000.00))
+                .currencyType("USD")
+                .transferDate(LocalDateTime.now().plusMonths(1))
+                .description("Payment for loan")
+                .build();
+
+        Mockito.when(loanDetailsRepository.findByLoan_id(loan.getId())).thenReturn(Optional.of(loanDetails));
+
+        // When Then
+        assertAll(() -> {
+            assertThrows(LoanAccountNumberException.class,
+                    () -> underTest.payInstallment(loan.getId(), transfer));
+            Mockito.verify(loanDetailsRepository, Mockito.times(1)).findByLoan_id(loan.getId());
+
+        });
+    }
+
+    @Test
+    @DisplayName("It should throw PayInstallmentException")
+    void itShouldThrowPayInstallmentException() {
+        // Given
+        Mockito.when(loanDetailsRepository.findByLoan_id(loan.getId())).thenReturn(Optional.of(loanDetails));
+        Mockito.when(transferServiceFeignClient.createTransfer(transfer)).thenReturn(ResponseEntity.status(500).build());
+
+        // When Then
+        assertAll(() -> {
+            assertThrows(PayInstallmentException.class, () -> underTest.payInstallment(loan.getId(), transfer));
+            Mockito.verify(loanDetailsRepository, Mockito.times(1)).findByLoan_id(any());
+            Mockito.verify(transferServiceFeignClient, Mockito.times(1)).createTransfer(any());
+        });
+    }
+
+
 }

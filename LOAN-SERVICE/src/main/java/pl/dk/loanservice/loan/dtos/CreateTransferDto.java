@@ -1,7 +1,5 @@
-package pl.dk.transfer_service.transfer.dtos;
+package pl.dk.loanservice.loan.dtos;
 
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 
