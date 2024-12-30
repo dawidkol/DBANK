@@ -3,25 +3,35 @@ package pl.dk.loanservice.loan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.loanservice.credit.CreditScoreCalculator;
+import pl.dk.loanservice.error.LoanAccountNumberException;
+import pl.dk.loanservice.exception.BadRequestException;
 import pl.dk.loanservice.exception.LoanNotExistsException;
+import pl.dk.loanservice.exception.PayInstallmentException;
 import pl.dk.loanservice.exception.UserNotFoundException;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
+import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
 import pl.dk.loanservice.httpClient.UserServiceFeignClient;
 import pl.dk.loanservice.httpClient.dtos.UserDto;
-import pl.dk.loanservice.loan.dtos.CreateLoanDto;
-import pl.dk.loanservice.loan.dtos.LoanDto;
-import pl.dk.loanservice.loan.dtos.LoanEvent;
+import pl.dk.loanservice.loan.dtos.*;
+import pl.dk.loanservice.loanDetails.LoanDetails;
+import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
+
+import static pl.dk.loanservice.kafka.KafkaConstants.CREATE_LOAN_ACCOUNT;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +43,9 @@ class LoanServiceImpl implements LoanService {
     private final AccountServiceFeignClient accountServiceFeignClient;
     private final UserServiceFeignClient userServiceFeignClient;
     private final CreditScoreCalculator creditScoreCalculator;
+    private final KafkaTemplate<String, CreateLoanAccountDto> kafkaTemplate;
+    private final TransferServiceFeignClient transferServiceFeignClient;
+    private final LoanDetailsRepository loanDetailsRepository;
 
     @Override
     @Transactional
@@ -100,6 +113,7 @@ class LoanServiceImpl implements LoanService {
                 loanEvent.months());
         if (score.compareTo(monthlyInstallment) > 0) {
             loanRepository.updateLoansStatus(LoanStatus.APPROVED, loanEvent.loanId());
+            kafkaTemplate.send(CREATE_LOAN_ACCOUNT, loanEvent.loanId(), createLoanAccount(loanEvent.userId(), loanEvent.loanId()));
         } else {
             loanRepository.updateLoansStatus(LoanStatus.REJECTED, loanEvent.loanId());
         }
@@ -114,4 +128,38 @@ class LoanServiceImpl implements LoanService {
                 .divide(qPow.subtract(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
     }
 
+    private CreateLoanAccountDto createLoanAccount(String userId, String loanId) {
+        return CreateLoanAccountDto.builder()
+                .userId(userId)
+                .accountType(AccountType.LOAN.name())
+                .balance(BigDecimal.ZERO)
+                .loanId(loanId)
+                .build();
+    }
+
+    @Override
+    public List<LoanDto> getAllUsersLoans(String userId, int page, int size) {
+        return loanRepository.findAllByUserId(userId, PageRequest.of(page - 1, size))
+                .stream()
+                .map(LoanDtoMapper::map)
+                .toList();
+    }
+
+    @Override
+    public TransferDto payInstallment(String loanId, CreateTransferDto createTransferDto) {
+        LoanDetails loanDetails = loanDetailsRepository.findByLoan_id(loanId).orElseThrow(() ->
+                new LoanNotExistsException("Loan with id: %s not found".formatted(loanId)));
+
+        if (!createTransferDto.recipientAccountNumber().equals(loanDetails.getLoanAccountNumber())) {
+            throw new LoanAccountNumberException("Bad loan account number: %s, check your data".formatted(createTransferDto.senderAccountNumber()));
+        }
+
+        ResponseEntity<TransferDto> transferDtoResponseEntity = transferServiceFeignClient.createTransfer(createTransferDto);
+
+        if (transferDtoResponseEntity.getStatusCode().isSameCodeAs(HttpStatus.CREATED)) {
+            return transferDtoResponseEntity.getBody();
+        }
+
+        throw new PayInstallmentException("Pay installment could not be processed, try again later");
+    }
 }
