@@ -1,7 +1,10 @@
 package pl.dk.accounts_service.account;
 
+
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -9,11 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-import pl.dk.accounts_service.exception.*;
+import pl.dk.accounts_service.exception.AccountBalanceException;
+import pl.dk.accounts_service.exception.AccountInactiveException;
+import pl.dk.accounts_service.exception.AccountNotExistsException;
+import pl.dk.accounts_service.exception.UserNotFoundException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -103,4 +110,11 @@ class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Override
+    public List<AccountDto> getAllUserAccounts(String userId, int page, int size) {
+        return accountRepository.findAllByUserId(userId, PageRequest.of(page - 1, size))
+                .stream()
+                .map(AccountDtoMapper::map)
+                .toList();
+    }
 }

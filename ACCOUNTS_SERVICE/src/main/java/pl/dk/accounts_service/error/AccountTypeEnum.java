@@ -2,7 +2,6 @@ package pl.dk.accounts_service.error;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import org.apache.commons.codec.language.bm.Lang;
 
 import java.lang.annotation.*;
 

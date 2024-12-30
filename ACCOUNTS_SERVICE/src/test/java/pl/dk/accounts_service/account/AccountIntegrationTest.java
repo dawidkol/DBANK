@@ -13,10 +13,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.account.dtos.UpdateAccountBalance;
 import pl.dk.accounts_service.error.RestControllerHandler;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
@@ -26,10 +30,15 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static pl.dk.accounts_service.kafka.KafkaConstants.CREATE_TRANSFER_EVENT;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"eureka.client.enabled=false"})
 @Transactional
+@EmbeddedKafka(topics = CREATE_TRANSFER_EVENT)
+@DirtiesContext
+@TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"})
 class AccountIntegrationTest {
 
     @Autowired
@@ -102,7 +111,9 @@ class AccountIntegrationTest {
         // 3. User tries to update bank account balance: Expected status: 200 OK
         // Given
         BigDecimal updateByValue = BigDecimal.valueOf(1);
-        HttpEntity<BigDecimal> updateAccounttHttpEntity = new HttpEntity<>(updateByValue);
+        UpdateAccountBalance updateAccountBalance = UpdateAccountBalance.builder()
+                .updateByValue(updateByValue).build();
+        HttpEntity<UpdateAccountBalance> updateAccounttHttpEntity = new HttpEntity<>(updateAccountBalance);
 
         // When
         ResponseEntity<AccountDto> patchResponse = testRestTemplate.exchange("/accounts/{accountNumber}", HttpMethod.PATCH, updateAccounttHttpEntity, AccountDto.class, postAccountNumber);
@@ -138,6 +149,21 @@ class AccountIntegrationTest {
         // Then
         assertAll(() -> {
             assertEquals(HttpStatus.NOT_FOUND, patch404Response.getStatusCode());
+        });
+
+        // 6. User tries to get all his accounts
+        // Given When
+        ResponseEntity<List<AccountDto>> allAccountsResponse = testRestTemplate.exchange("/accounts/{userId}/all",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<AccountDto>>() {
+                },
+                userId);
+
+        // Then
+        assertAll(() -> {
+            assertEquals(HttpStatus.OK, allAccountsResponse.getStatusCode());
+            assertEquals(1, allAccountsResponse.getBody().size());
         });
 
     }
