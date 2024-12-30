@@ -5,23 +5,37 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
+import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
+import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
 import pl.dk.loanservice.httpClient.UserServiceFeignClient;
 import pl.dk.loanservice.httpClient.dtos.UserDto;
 import pl.dk.loanservice.loan.dtos.CreateLoanDto;
+import pl.dk.loanservice.loan.dtos.CreateTransferDto;
 import pl.dk.loanservice.loan.dtos.LoanDto;
+import pl.dk.loanservice.loan.dtos.TransferDto;
+import pl.dk.loanservice.loanDetails.LoanDetails;
+import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_PAGE;
+import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_SIZE;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {"eureka.client.enabled=false"})
@@ -33,6 +47,16 @@ class LoanControllerTest {
 
     @MockitoBean
     private UserServiceFeignClient userServiceFeignClient;
+
+    @MockitoBean
+    private TransferServiceFeignClient transferServiceFeignClient;
+
+    @MockitoBean
+    private AccountServiceFeignClient accountServiceFeignClient;
+
+    @MockitoBean
+    private LoanDetailsRepository loanDetailsRepository;
+
 
     CreateLoanDto createLoanDto;
     UserDto userDto;
@@ -61,8 +85,8 @@ class LoanControllerTest {
     }
 
     @Test
-    @DisplayName("Loan Service Integration Test: Create Loan, Retrieve Loan by ID, and Calculate Monthly Installment")
-    void itShouldTestLoanLifecycleAndInstallmentCalculation() {
+    @DisplayName("Test Loan lifecycle and payment integration")
+    void testLoanLifecycleAndPaymentIntegration() {
         // 1. User tries to create loan. Expected status: 201 CREATED
         // Given
         Mockito.when(userServiceFeignClient.getUserById(createLoanDto.userId())).thenReturn(ResponseEntity.of(Optional.of(userDto)));
@@ -93,7 +117,7 @@ class LoanControllerTest {
         // 3. User wants to calculate monthly installment. Expected status code: 200 OK
         // Given
         BigDecimal amount = BigDecimal.valueOf(3_000_000);
-        BigDecimal months = BigDecimal.valueOf(30*12);
+        BigDecimal months = BigDecimal.valueOf(30 * 12);
         BigDecimal interestRate = BigDecimal.valueOf(8);
 
         // When
@@ -107,6 +131,66 @@ class LoanControllerTest {
         assertAll(() -> {
             assertEquals(HttpStatus.OK, getMonthlyInstallment.getStatusCode());
             assertNotNull(loanDtoResponseEntity.getBody());
+        });
+
+        // 4. User wants to get all his loans. Expected status code 200 OK
+        // Given
+        String userId = loanDtoResponseEntity.getBody().userId();
+
+        // When
+        ResponseEntity<List<LoanDto>> getAllUserLoans = testRestTemplate.exchange(
+                "/loans/{userId}/all?page={page}&size={size}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<LoanDto>>() {
+                },
+                userId,
+                DEFAULT_PAGE,
+                DEFAULT_SIZE
+        );
+
+        // Then
+        assertAll(() -> {
+                    assertEquals(HttpStatus.OK, getAllUserLoans.getStatusCode());
+                    assertNotNull(getAllUserLoans);
+                    assertEquals(1, getAllUserLoans.getBody().size());
+                }
+        );
+
+        // 5. User wants to pay for one of his loans
+        // Given
+        String senderAccountNumber = "00000000000000000000000000";
+        String recipientAccountNumber = "11111111111111111111111111";
+        CreateTransferDto createTransferDto = CreateTransferDto.builder()
+                .senderAccountNumber(senderAccountNumber)
+                .recipientAccountNumber(recipientAccountNumber)
+                .amount(amount)
+                .currencyType("PLN")
+                .transferDate(LocalDateTime.now().plusMonths(3))
+                .description("Monthly rent payment")
+                .build();
+
+        TransferDto transferDto = TransferDto.builder()
+                .recipientAccountNumber(recipientAccountNumber)
+                .senderAccountNumber(senderAccountNumber)
+                .amount(amount)
+                .build();
+
+        LoanDetails loanDetails = LoanDetails.builder()
+                .loanAccountNumber(recipientAccountNumber)
+                .loan(Loan.builder().id(location).build())
+                .build();
+
+        Mockito.when(loanDetailsRepository.findByLoan_id(any())).thenReturn(Optional.of(loanDetails));
+        Mockito.when(accountServiceFeignClient.getAvgLast12Moths(userId)).thenReturn(ResponseEntity.of(Optional.of(BigDecimal.valueOf(15000))));
+        Mockito.when(transferServiceFeignClient.createTransfer(createTransferDto)).thenReturn(ResponseEntity.status(201).body(transferDto));
+
+        // When
+        ResponseEntity<TransferDto> transferDtoResponseEntity = testRestTemplate.postForEntity("/loans/pay/{loanId}", new HttpEntity<>(createTransferDto), TransferDto.class, recipientAccountNumber);
+
+        // Then
+        assertAll(() -> {
+            assertEquals(HttpStatus.CREATED, transferDtoResponseEntity.getStatusCode());
         });
 
     }
