@@ -33,6 +33,8 @@ public class Loan extends BaseEntity {
     private LocalDate startDate;
     @Future
     private LocalDate endDate;
+    @Positive
+    private Integer numberOfInstallments;
     @PositiveOrZero
     @NotNull
     private BigDecimal remainingAmount;

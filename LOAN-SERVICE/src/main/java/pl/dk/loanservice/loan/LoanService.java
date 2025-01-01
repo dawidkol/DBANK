@@ -5,7 +5,7 @@ import pl.dk.loanservice.loan.dtos.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-interface LoanService {
+public interface LoanService {
 
     LoanDto createLoan(CreateLoanDto createLoanDto);
 
@@ -17,8 +17,6 @@ interface LoanService {
 
     List<LoanDto> getAllUsersLoans(String userId, int page, int size);
 
-//    CreateLoanAccountDto createLoanAccount(String userId, String loanId);
-
-    TransferDto payInstallment(String loanId, CreateTransferDto createPayInstallmentDto);
+    TransferDto payInstallment(CreateLoanInstallmentTransfer createLoanInstallmentTransfer);
 
 }

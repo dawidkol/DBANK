@@ -9,10 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pl.dk.loanservice.loan.dtos.CreateLoanDto;
-import pl.dk.loanservice.loan.dtos.CreateTransferDto;
-import pl.dk.loanservice.loan.dtos.LoanDto;
-import pl.dk.loanservice.loan.dtos.TransferDto;
+import pl.dk.loanservice.loan.dtos.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -65,9 +62,15 @@ class LoanController {
         return ResponseEntity.ok(allUsersLoans);
     }
 
-    @PostMapping("/pay/{loanId}")
-    public ResponseEntity<TransferDto> payInstallment(@PathVariable String loanId, @Valid @RequestBody CreateTransferDto createTransferDto) {
-        TransferDto transferDto = loanService.payInstallment(loanId, createTransferDto);
+//    @PostMapping("/pay/{loanId}")
+//    public ResponseEntity<TransferDto> payInstallment(@PathVariable String loanId, @Valid @RequestBody CreateTransferDto createTransferDto) {
+//        TransferDto transferDto = loanService.payInstallment(loanId, createTransferDto);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(transferDto);
+//    }
+
+    @PostMapping("/pay")
+    public ResponseEntity<TransferDto> payInstallment( @Valid @RequestBody CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
+        TransferDto transferDto = loanService.payInstallment(createLoanInstallmentTransfer);
         return ResponseEntity.status(HttpStatus.CREATED).body(transferDto);
     }
 

@@ -23,5 +23,6 @@ public class LoanDetails extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "loan_id")
     private Loan loan;
+    private Boolean scheduleAvailable;
 
 }
