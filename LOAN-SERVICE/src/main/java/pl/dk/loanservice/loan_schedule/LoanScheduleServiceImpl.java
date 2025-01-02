@@ -13,6 +13,7 @@ import pl.dk.loanservice.loan.Loan;
 import pl.dk.loanservice.loan.LoanRepository;
 import pl.dk.loanservice.loan.LoanService;
 import pl.dk.loanservice.loan_details.LoanDetailsRepository;
+import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleDto;
 import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleEvent;
 import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 
@@ -99,5 +100,13 @@ class LoanScheduleServiceImpl implements LoanScheduleService {
         log.info("Starting updating LoanSchedule records");
         int updatedRows = loanScheduleRepository.setPaymentStatusFromUnpaidTo(OVERDUE);
         log.info("Updated LoanSchedule rows {}", updatedRows);
+    }
+
+    @Override
+    public List<LoanScheduleDto> getLoanSchedule(String loan_id) {
+        return loanScheduleRepository.findAllByLoan_id(loan_id)
+                .stream()
+                .map(LoanScheduleDtoMapper::map)
+                .toList();
     }
 }
