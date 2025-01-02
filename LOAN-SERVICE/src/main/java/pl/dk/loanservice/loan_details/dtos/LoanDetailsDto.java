@@ -12,6 +12,7 @@ public record LoanDetailsDto(String loanId,
                              BigDecimal remainingAmount,
                              BigDecimal amountPaid,
                              String loanAccount,
-                             LocalDate lastPaymentDateTo
+                             LocalDate lastPaymentDateTo,
+                             Boolean scheduleAvailable
 ) {
 }

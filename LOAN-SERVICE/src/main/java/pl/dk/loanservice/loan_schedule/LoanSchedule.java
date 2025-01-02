@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @Builder
 @Getter
 @Setter
-class LoanSchedule extends BaseEntity {
+public class LoanSchedule extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

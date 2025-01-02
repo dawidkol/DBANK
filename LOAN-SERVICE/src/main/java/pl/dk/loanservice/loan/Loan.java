@@ -46,7 +46,6 @@ public class Loan extends BaseEntity {
     private String description;
 
     @Builder
-
     public Loan(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String id,
                 String userId, BigDecimal amount, BigDecimal interestRate, LocalDate startDate, LocalDate endDate,
                 Integer numberOfInstallments, BigDecimal remainingAmount, LoanStatus status, String description) {

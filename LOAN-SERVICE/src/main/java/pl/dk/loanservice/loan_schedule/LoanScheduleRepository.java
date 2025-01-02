@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-interface LoanScheduleRepository extends JpaRepository<LoanSchedule, String> {
+public interface LoanScheduleRepository extends JpaRepository<LoanSchedule, String> {
 
     List<LoanSchedule> findAllByLoan_idAndPaymentStatusOrPaymentStatus(String loanId, PaymentStatus paymentStatus, PaymentStatus paymentStatus1);
+
+    Optional<LoanSchedule> findFirstByLoan_Id(String loanId);
 }
