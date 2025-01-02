@@ -13,17 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import pl.dk.loanservice.credit.CreditScoreCalculator;
-import pl.dk.loanservice.exception.LoanNotExistsException;
-import pl.dk.loanservice.exception.PayInstallmentException;
-import pl.dk.loanservice.exception.TransferServiceUnavailableException;
-import pl.dk.loanservice.exception.UserNotFoundException;
+import pl.dk.loanservice.exception.*;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
 import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
 import pl.dk.loanservice.httpClient.UserServiceFeignClient;
 import pl.dk.loanservice.httpClient.dtos.UserDto;
 import pl.dk.loanservice.loan.dtos.*;
-import pl.dk.loanservice.loanDetails.LoanDetails;
-import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
+import pl.dk.loanservice.loan_details.LoanDetails;
+import pl.dk.loanservice.loan_details.LoanDetailsRepository;
 import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 
 import java.math.BigDecimal;
@@ -159,7 +156,7 @@ class LoanServiceImpl implements LoanService {
     public TransferDto payInstallment(CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
         String loanId = createLoanInstallmentTransfer.loanId();
         LoanDetails loanDetails = loanDetailsRepository.findByLoan_id(loanId).orElseThrow(() ->
-                new LoanNotExistsException("Loan with id: %s not found".formatted(loanId)));
+                new LoanDetailsNotExistsException("Loan with id: %s not found".formatted(loanId)));
 
         Loan loan = loanRepository.findById(loanId).orElseThrow(() ->
                 new LoanNotExistsException("Loan with id: %s not found".formatted(loanId)));

@@ -1,11 +1,9 @@
 package pl.dk.loanservice.kafka.consumer;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
@@ -23,11 +21,9 @@ import pl.dk.loanservice.loan.Loan;
 import pl.dk.loanservice.loan.LoanRepository;
 import pl.dk.loanservice.loan.LoanStatus;
 import pl.dk.loanservice.loan.dtos.CreateLoanDto;
-import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +33,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static pl.dk.loanservice.kafka.KafkaConstants.CREATE_LOAN_ACCOUNT;
 import static pl.dk.loanservice.kafka.KafkaConstants.LOAN_ACCOUNT_CREATED;
 
 @SpringBootTest

@@ -4,13 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import pl.dk.loanservice.exception.LoanDetailsNotExistsException;
 import pl.dk.loanservice.exception.LoanNotExistsException;
 import pl.dk.loanservice.loan.Loan;
 import pl.dk.loanservice.loan.LoanRepository;
 import pl.dk.loanservice.loan.LoanService;
-import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
+import pl.dk.loanservice.loan_details.LoanDetailsRepository;
 import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleEvent;
 import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 

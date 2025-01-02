@@ -1,9 +1,9 @@
-package pl.dk.loanservice.loanDetails;
+package pl.dk.loanservice.loan_details;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pl.dk.loanservice.loanDetails.dtos.LoanDetailsDto;
+import pl.dk.loanservice.loan_details.dtos.LoanDetailsDto;
 
 @RestController
 @RequestMapping("/loan-details")

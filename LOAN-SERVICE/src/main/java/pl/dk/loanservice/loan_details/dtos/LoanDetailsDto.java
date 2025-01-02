@@ -1,4 +1,4 @@
-package pl.dk.loanservice.loanDetails.dtos;
+package pl.dk.loanservice.loan_details.dtos;
 
 import lombok.Builder;
 

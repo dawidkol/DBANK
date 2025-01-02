@@ -10,11 +10,9 @@ import pl.dk.loanservice.exception.LoanNotExistsException;
 import pl.dk.loanservice.kafka.consumer.dtos.CreatedLoanAccountEvent;
 import pl.dk.loanservice.loan.Loan;
 import pl.dk.loanservice.loan.LoanRepository;
-import pl.dk.loanservice.loanDetails.LoanDetails;
-import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
+import pl.dk.loanservice.loan_details.LoanDetails;
+import pl.dk.loanservice.loan_details.LoanDetailsRepository;
 import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleEvent;
-
-import java.util.List;
 
 import static pl.dk.loanservice.kafka.KafkaConstants.LOAN_ACCOUNT_CREATED;
 

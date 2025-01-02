@@ -1,4 +1,4 @@
-package pl.dk.loanservice.loanDetails;
+package pl.dk.loanservice.loan_details;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

@@ -46,9 +46,10 @@ public class Loan extends BaseEntity {
     private String description;
 
     @Builder
+
     public Loan(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String id,
                 String userId, BigDecimal amount, BigDecimal interestRate, LocalDate startDate, LocalDate endDate,
-                BigDecimal remainingAmount, LoanStatus status, String description) {
+                Integer numberOfInstallments, BigDecimal remainingAmount, LoanStatus status, String description) {
         super(createdAt, createdBy, updatedAt, updatedBy);
         this.id = id;
         this.userId = userId;
@@ -56,6 +57,7 @@ public class Loan extends BaseEntity {
         this.interestRate = interestRate;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.numberOfInstallments = numberOfInstallments;
         this.remainingAmount = remainingAmount;
         this.status = status;
         this.description = description;
