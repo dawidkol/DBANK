@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import pl.dk.loanservice.loan.dtos.CreateTransferDto;
 import pl.dk.loanservice.loan.dtos.TransferDto;
 
-@FeignClient(name = "TRANSFER-SERVICE", dismiss404 = true, fallback = TransferServiceFallback.class)
+@FeignClient(name = "TRANSFER-SERVICE", fallbackFactory = TransferServiceFallbackFactory.class, dismiss404 = true)
 public interface TransferServiceFeignClient {
 
     @PostMapping("/transfers")

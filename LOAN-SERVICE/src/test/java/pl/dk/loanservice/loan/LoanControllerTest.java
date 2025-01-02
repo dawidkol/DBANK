@@ -5,7 +5,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
@@ -20,13 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
 import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
 import pl.dk.loanservice.httpClient.UserServiceFeignClient;
+import pl.dk.loanservice.httpClient.dtos.AccountDto;
 import pl.dk.loanservice.httpClient.dtos.UserDto;
-import pl.dk.loanservice.loan.dtos.CreateLoanDto;
-import pl.dk.loanservice.loan.dtos.CreateTransferDto;
-import pl.dk.loanservice.loan.dtos.LoanDto;
-import pl.dk.loanservice.loan.dtos.TransferDto;
-import pl.dk.loanservice.loanDetails.LoanDetails;
-import pl.dk.loanservice.loanDetails.LoanDetailsRepository;
+import pl.dk.loanservice.loan.dtos.*;
+import pl.dk.loanservice.loan_details.LoanDetails;
+import pl.dk.loanservice.loan_details.LoanDetailsRepository;
+import pl.dk.loanservice.loan_details.dtos.LoanDetailsDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,6 +34,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_PAGE;
 import static pl.dk.loanservice.constants.PagingAndSorting.DEFAULT_SIZE;
 import static pl.dk.loanservice.kafka.KafkaConstants.LOAN_ACCOUNT_CREATED;
@@ -128,7 +127,7 @@ class LoanControllerTest {
 
         // When
         ResponseEntity<BigDecimal> getMonthlyInstallment = testRestTemplate.getForEntity(
-                "/loans/monthly-installment?amount={amount}&interestRate={interestRate}&months={months}",
+                "/loans/monthly-installment?amount={amount}&interestRate={interestRate}&months={amountOfInstallemnts}",
                 BigDecimal.class,
                 amount, interestRate, months
         );
@@ -167,11 +166,9 @@ class LoanControllerTest {
         // Given
         String senderAccountNumber = "00000000000000000000000000";
         String recipientAccountNumber = "11111111111111111111111111";
-        CreateTransferDto createTransferDto = CreateTransferDto.builder()
+        CreateLoanInstallmentTransfer createLoanInstallmentTransfer = CreateLoanInstallmentTransfer.builder()
+                .loanId(location)
                 .senderAccountNumber(senderAccountNumber)
-                .recipientAccountNumber(recipientAccountNumber)
-                .amount(amount)
-                .currencyType("PLN")
                 .transferDate(LocalDateTime.now().plusMonths(3))
                 .description("Monthly rent payment")
                 .build();
@@ -189,14 +186,30 @@ class LoanControllerTest {
 
         Mockito.when(loanDetailsRepository.findByLoan_id(any())).thenReturn(Optional.of(loanDetails));
         Mockito.when(accountServiceFeignClient.getAvgLast12Moths(userId)).thenReturn(ResponseEntity.of(Optional.of(BigDecimal.valueOf(15000))));
-        Mockito.when(transferServiceFeignClient.createTransfer(createTransferDto)).thenReturn(ResponseEntity.status(201).body(transferDto));
+        Mockito.when(transferServiceFeignClient.createTransfer(any())).thenReturn(ResponseEntity.status(201).body(transferDto));
 
         // When
-        ResponseEntity<TransferDto> transferDtoResponseEntity = testRestTemplate.postForEntity("/loans/pay/{loanId}", new HttpEntity<>(createTransferDto), TransferDto.class, recipientAccountNumber);
+        ResponseEntity<TransferDto> transferDtoResponseEntity = testRestTemplate.postForEntity("/loans/pay",
+                new HttpEntity<>(createLoanInstallmentTransfer),
+                TransferDto.class);
 
         // Then
         assertAll(() -> {
             assertEquals(HttpStatus.CREATED, transferDtoResponseEntity.getStatusCode());
+        });
+
+        // 6. User wants to get details about his loan
+        // Given
+        Mockito.when(accountServiceFeignClient.getAccountById(loanDetails.getLoanAccountNumber()))
+                .thenReturn(ResponseEntity.ok(AccountDto.builder().balance(BigDecimal.TEN).build()));
+
+        // When
+        ResponseEntity<LoanDetailsDto> getLoanDetails = testRestTemplate.getForEntity("/loan-details/{loanId}", LoanDetailsDto.class, location);
+
+        // Then
+        assertAll(() -> {
+            assertNotNull(getLoanDetails.getBody());
+            assertEquals(HttpStatus.OK, getLoanDetails.getStatusCode());
         });
 
     }

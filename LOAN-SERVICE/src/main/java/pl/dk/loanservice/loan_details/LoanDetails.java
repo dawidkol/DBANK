@@ -1,4 +1,4 @@
-package pl.dk.loanservice.loanDetails;
+package pl.dk.loanservice.loan_details;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -23,5 +23,6 @@ public class LoanDetails extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "loan_id")
     private Loan loan;
+    private Boolean scheduleAvailable;
 
 }

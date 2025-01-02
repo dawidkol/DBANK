@@ -1,4 +1,4 @@
-package pl.dk.loanservice.loanDetails.dtos;
+package pl.dk.loanservice.loan_details.dtos;
 
 import lombok.Builder;
 
@@ -12,6 +12,7 @@ public record LoanDetailsDto(String loanId,
                              BigDecimal remainingAmount,
                              BigDecimal amountPaid,
                              String loanAccount,
-                             LocalDate lastPaymentDateTo
+                             LocalDate lastPaymentDateTo,
+                             Boolean scheduleAvailable
 ) {
 }
