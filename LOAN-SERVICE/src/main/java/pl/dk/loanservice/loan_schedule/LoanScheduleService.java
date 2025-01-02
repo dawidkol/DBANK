@@ -9,4 +9,6 @@ interface LoanScheduleService {
 
     void updatePaymentInstallmentStatus(UpdateSchedulePaymentEvent event);
 
+    void setPaymentStatusAsPaidLate();
+
 }

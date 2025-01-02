@@ -3,7 +3,10 @@ package pl.dk.loanservice.loan_schedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pl.dk.loanservice.exception.LoanDetailsNotExistsException;
 import pl.dk.loanservice.exception.LoanNotExistsException;
 import pl.dk.loanservice.loan.Loan;
@@ -88,4 +91,13 @@ class LoanScheduleServiceImpl implements LoanScheduleService {
                 });
     }
 
+    @Override
+    @Async
+    @Scheduled(cron = "${scheduler.payment-status}")
+    @Transactional
+    public void setPaymentStatusAsPaidLate() {
+        log.info("Starting updating LoanSchedule records");
+        int updatedRows = loanScheduleRepository.setPaymentStatusFromUnpaidTo(OVERDUE);
+        log.info("Updated LoanSchedule rows {}", updatedRows);
+    }
 }

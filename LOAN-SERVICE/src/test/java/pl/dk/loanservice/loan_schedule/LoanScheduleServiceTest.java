@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pl.dk.loanservice.exception.LoanDetailsNotExistsException;
@@ -262,6 +263,24 @@ class LoanScheduleServiceTest {
                     updateSchedulePaymentEvent.loanId(),
                     UNPAID,
                     OVERDUE);
+        });
+    }
+
+    @Test
+    @DisplayName("It should set payment status as OVERDUE")
+    void itShouldSetPaymentStatusAsOverdue() {
+        // Given
+        when(loanScheduleRepository.setPaymentStatusFromUnpaidTo(OVERDUE)).thenReturn(3);
+
+        // When
+        underTest.setPaymentStatusAsPaidLate();
+        ArgumentCaptor<PaymentStatus> paymentStatusArgumentCaptor = ArgumentCaptor.forClass(PaymentStatus.class);
+
+        // Then
+        assertAll(() -> {
+            verify(loanScheduleRepository, times(1))
+                    .setPaymentStatusFromUnpaidTo(paymentStatusArgumentCaptor.capture());
+            assertEquals(OVERDUE, paymentStatusArgumentCaptor.getValue());
         });
     }
 }
