@@ -36,9 +36,14 @@ class LoanScheduleServiceImpl implements LoanScheduleService {
     public void createSchedule(LoanScheduleEvent loanScheduleEvent) {
         LocalDate startDate = loanScheduleEvent.startDate();
         Integer numberOfInstallments = loanScheduleEvent.numberOfInstallments();
-        BigDecimal installment = loanService.calculateMonthlyInstallment(loanScheduleEvent.amount(), loanScheduleEvent.interestRate(), numberOfInstallments);
+        BigDecimal installment = loanService.calculateMonthlyInstallment(
+                loanScheduleEvent.amount(),
+                loanScheduleEvent.interestRate(),
+                numberOfInstallments
+        );
         String loanId = loanScheduleEvent.loanId();
-        Loan loan = loanRepository.findById(loanId).orElseThrow(() -> new LoanNotExistsException("Loan with id: %s not exists".formatted(loanId)));
+        Loan loan = loanRepository.findById(loanId).orElseThrow(
+                () -> new LoanNotExistsException("Loan with id: %s not exists".formatted(loanId)));
         List<LoanSchedule> loanSchedules = new ArrayList<>();
         for (int i = 0; i < numberOfInstallments; i++) {
             LocalDate localDate = startDate.plusMonths(i);
@@ -63,9 +68,13 @@ class LoanScheduleServiceImpl implements LoanScheduleService {
         });
     }
 
+    @Override
     @ApplicationModuleListener
     public void updatePaymentInstallmentStatus(UpdateSchedulePaymentEvent event) {
-        loanScheduleRepository.findAllByLoan_idAndPaymentStatusOrPaymentStatus(event.loanId(), UNPAID, OVERDUE)
+        loanScheduleRepository.findAllByLoan_idAndPaymentStatusOrPaymentStatus(
+                        event.loanId(),
+                        UNPAID,
+                        OVERDUE)
                 .stream()
                 .min(Comparator.comparing(LoanSchedule::getDeadline))
                 .ifPresentOrElse(loanSchedule -> {
