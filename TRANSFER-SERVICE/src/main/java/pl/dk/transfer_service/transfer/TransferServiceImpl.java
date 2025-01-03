@@ -2,6 +2,7 @@ package pl.dk.transfer_service.transfer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -16,6 +17,8 @@ import pl.dk.transfer_service.kafka.KafkaConstants;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferEvent;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -47,7 +50,7 @@ class TransferServiceImpl implements TransferService {
     private AccountDto validateRequest(CreateTransferDto createTransferDto) {
         ResponseEntity<AccountDto> sender = accountFeignClient.getAccountById(createTransferDto.senderAccountNumber());
         ResponseEntity<AccountDto> recipient = accountFeignClient.getAccountById(createTransferDto.recipientAccountNumber());
-        if (sender.getStatusCode() == HttpStatus.NOT_FOUND || recipient.getStatusCode() == HttpStatus.NOT_FOUND) {
+        if (sender.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND) || recipient.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND)) {
             throw new AccountNotExistsException("Account with id: %s not exists");
         }
         AccountDto senderAccountDto = sender.getBody();
@@ -78,5 +81,24 @@ class TransferServiceImpl implements TransferService {
                             throw new TransferNotFoundException("Transfer with id: %s not found".formatted(transferId));
                         }
                 );
+    }
+
+    @Override
+    public List<TransferDto> getAllTransfersFromAccount(String accountNumber, int page, int size) {
+        return transferRepository.findAllBySenderAccountNumber(accountNumber,
+                        PageRequest.of(page - 1, size))
+                .stream()
+                .map(TransferDtoMapper::map)
+                .toList();
+    }
+
+    @Override
+    public List<TransferDto> getAllTransferFromTo(String senderAccountNumber, String recipientAccountNumber, int page, int size) {
+        return transferRepository.findAllBySenderAccountNumberAndRecipientAccountNumber(senderAccountNumber,
+                        recipientAccountNumber,
+                        PageRequest.of(page - 1, size))
+                .stream()
+                .map(TransferDtoMapper::map)
+                .toList();
     }
 }
