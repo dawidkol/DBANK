@@ -4,13 +4,20 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import pl.dk.transfer_service.constants.TransferServiceConstants;
 import pl.dk.transfer_service.exception.InsufficientBalanceException;
+import pl.dk.transfer_service.exception.TransferNotFoundException;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
@@ -19,9 +26,13 @@ import pl.dk.transfer_service.transfer.dtos.TransferEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static pl.dk.transfer_service.constants.TransferServiceConstants.*;
+import static pl.dk.transfer_service.transfer.TransferStatus.*;
 
 class TransferServiceTest {
 
@@ -93,7 +104,7 @@ class TransferServiceTest {
                 .amount(amount)
                 .currencyType(CurrencyType.PLN)
                 .transferDate(transferDate)
-                .transferStatus(TransferStatus.PENDING)
+                .transferStatus(PENDING)
                 .description(description)
                 .balanceAfterTransfer(balanceAfterTransfer)
                 .build();
@@ -133,7 +144,7 @@ class TransferServiceTest {
                     assertEquals(amount, result.amount());
                     assertEquals(CurrencyType.PLN.toString(), result.currencyType());
                     assertEquals(transferDate, result.transferDate());
-                    assertEquals(TransferStatus.PENDING.name(), result.transferStatus());
+                    assertEquals(PENDING.name(), result.transferStatus());
                     assertEquals(description, result.description());
                     assertEquals(balanceAfterTransfer, result.balanceAfterTransfer());
                 }
@@ -164,4 +175,127 @@ class TransferServiceTest {
                 }
         );
     }
+
+    @Test
+    @DisplayName("It should return transfer by given Id")
+    void itShouldReturnTransferByGivenId() {
+        // Given
+        Mockito.when(transferRepository.findById(transfer.getId()))
+                .thenReturn(Optional.of(transfer));
+
+        // When
+        TransferDto result = underTest.getTransferById(transfer.getId());
+
+        // Then
+        assertAll(() -> {
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findById(transfer.getId());
+            assertEquals(transfer.getId(), result.transferId());
+            assertNotEquals(transfer.getSenderAccountNumber(), result.senderAccountNumber());
+            assertNotEquals(transfer.getRecipientAccountNumber(), result.recipientAccountNumber());
+            assertEquals(transfer.getAmount(), result.amount());
+            assertEquals(transfer.getCurrencyType().name(), result.currencyType());
+            assertEquals(transfer.getTransferDate(), result.transferDate());
+            assertEquals(transfer.getTransferStatus().name(), result.transferStatus());
+            assertEquals(transfer.getDescription(), result.description());
+            assertEquals(transfer.getBalanceAfterTransfer(), result.balanceAfterTransfer());
+        });
+    }
+
+    @Test
+    @DisplayName("It should throw TransferNotFoundException when given id not exists")
+    void itShouldThrowTransferNotFoundExceptionWhenGivenIdNotExists() {
+        // Given
+        Mockito.when(transferRepository.findById(transfer.getId()))
+                .thenReturn(Optional.empty());
+
+        // When // Then
+        assertAll(() -> {
+            assertThrows(TransferNotFoundException.class,
+                    () -> underTest.getTransferById(transfer.getId()));
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findById(transfer.getId());
+        });
+    }
+
+    @ParameterizedTest
+    @EnumSource(TransferStatus.class)
+    @DisplayName("It should set transfer status as COMPLETED")
+    void itShouldSetTransferStatusAs(TransferStatus transferStatus) {
+        // Given
+        Mockito.when(transferRepository.findById(transfer.getId()))
+                .thenReturn(Optional.of(transfer));
+
+        // When
+        underTest.updateTransferStatus(transfer.getId(), transferStatus);
+
+        // Then
+        assertAll(() -> {
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findById(transfer.getId());
+        });
+    }
+
+    @Test
+    void itShouldThrowExceptionWhenUserTriesToUpdateTransferStatusThatNotExists() {
+        // Given
+        Mockito.when(transferRepository.findById(transfer.getId()))
+                .thenReturn(Optional.empty());
+
+        // When Then
+        assertAll(() -> {
+            assertThrows(TransferNotFoundException.class, () ->
+                    underTest.updateTransferStatus(transfer.getId(), COMPLETED));
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findById(transfer.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("It should return all transfers from given account number")
+    void itShouldReturnAllTransferFromGivenAccountNumber() {
+        // Given
+        List<Transfer> transfers = List.of(transfer);
+        int pageNumber = Integer.parseInt(PAGE_DEFAULT);
+        int pageSize = Integer.parseInt(SIZE_DEFAULT);
+        Mockito.when(transferRepository.findAllBySenderAccountNumber(senderAccountNumber,
+                        PageRequest.of(
+                                pageNumber - 1,
+                                pageSize)))
+                .thenReturn(new PageImpl<>(transfers));
+
+        // When
+        List<TransferDto> result = underTest.getAllTransfersFromAccount(senderAccountNumber, pageNumber, pageSize);
+
+        // Then
+        assertAll(() -> {
+            assertEquals(transfers.size(), result.size());
+            assertThat(result).hasOnlyElementsOfType(TransferDto.class);
+        });
+    }
+
+    @Test
+    @DisplayName("It should return all transfers from given account number to another given account number")
+    void itShouldReturnAllTransferFromGivenAccountToAnotherGivenAccount() {
+        // Given
+        List<Transfer> transfers = List.of(transfer);
+        int pageNumber = Integer.parseInt(PAGE_DEFAULT);
+        int pageSize = Integer.parseInt(SIZE_DEFAULT);
+        Mockito.when(transferRepository.findAllBySenderAccountNumberAndRecipientAccountNumber(senderAccountNumber,
+                        recipientAccountNumber,
+                        PageRequest.of(
+                                pageNumber - 1,
+                                pageSize)))
+                .thenReturn(new PageImpl<>(transfers));
+
+        // When
+        List<TransferDto> result = underTest.getAllTransferFromTo(senderAccountNumber, recipientAccountNumber, pageNumber, pageSize);
+
+        // Then
+        assertAll(() -> {
+            assertEquals(transfers.size(), result.size());
+            assertThat(result).hasOnlyElementsOfType(TransferDto.class);
+        });
+    }
+
 }
