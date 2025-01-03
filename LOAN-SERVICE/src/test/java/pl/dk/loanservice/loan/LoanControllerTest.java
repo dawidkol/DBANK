@@ -25,6 +25,7 @@ import pl.dk.loanservice.loan.dtos.*;
 import pl.dk.loanservice.loan_details.LoanDetails;
 import pl.dk.loanservice.loan_details.LoanDetailsRepository;
 import pl.dk.loanservice.loan_details.dtos.LoanDetailsDto;
+import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -162,7 +163,7 @@ class LoanControllerTest {
                 }
         );
 
-        // 5. User wants to pay for one of his loans
+        // 5. User wants to pay for one of his loans. Expected status code: 201 CREATED
         // Given
         String senderAccountNumber = "00000000000000000000000000";
         String recipientAccountNumber = "11111111111111111111111111";
@@ -198,7 +199,7 @@ class LoanControllerTest {
             assertEquals(HttpStatus.CREATED, transferDtoResponseEntity.getStatusCode());
         });
 
-        // 6. User wants to get details about his loan
+        // 6. User wants to get details about his loan. Expected status
         // Given
         Mockito.when(accountServiceFeignClient.getAccountById(loanDetails.getLoanAccountNumber()))
                 .thenReturn(ResponseEntity.ok(AccountDto.builder().balance(BigDecimal.TEN).build()));
@@ -212,5 +213,19 @@ class LoanControllerTest {
             assertEquals(HttpStatus.OK, getLoanDetails.getStatusCode());
         });
 
+        // 7. User wants to get loan schedule. Expected status code: 200 OK
+        // Given  When
+        ResponseEntity<List<LoanScheduleDto>> getLoanSchedule = testRestTemplate.exchange(
+                "/loan-schedules/{loanId}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<LoanScheduleDto>>() {
+                }, location);
+
+        // Then
+        assertAll(() -> {
+            assertEquals(HttpStatus.OK, getLoanSchedule.getStatusCode());
+            assertNotNull(getLoanSchedule);
+        });
     }
 }

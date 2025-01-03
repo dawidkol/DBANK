@@ -14,6 +14,7 @@ import pl.dk.loanservice.loan.LoanRepository;
 import pl.dk.loanservice.loan.LoanService;
 import pl.dk.loanservice.loan_details.LoanDetails;
 import pl.dk.loanservice.loan_details.LoanDetailsRepository;
+import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleDto;
 import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleEvent;
 import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 
@@ -281,6 +282,29 @@ class LoanScheduleServiceTest {
             verify(loanScheduleRepository, times(1))
                     .setPaymentStatusFromUnpaidTo(paymentStatusArgumentCaptor.capture());
             assertEquals(OVERDUE, paymentStatusArgumentCaptor.getValue());
+        });
+    }
+
+    @Test
+    @DisplayName("It should return LoanSchedule fot given loanId")
+    void itShouldReturnLoanScheduleForGivenLoanId() {
+        // Given
+        LocalDate deadline = LocalDate.now().minusDays(1);
+        LoanSchedule loanSchedule = LoanSchedule.builder()
+                .installment(new BigDecimal("500.00"))
+                .deadline(deadline)
+                .paymentStatus(PaymentStatus.UNPAID)
+                .build();
+        when(loanScheduleRepository.findAllByLoan_id(loanScheduleEvent.loanId()))
+                .thenReturn(List.of(loanSchedule));
+        // When
+        List<LoanScheduleDto> loanSchedules = underTest.getLoanSchedule(loanScheduleEvent.loanId());
+
+        // Then
+        assertAll(() -> {
+            verify(loanScheduleRepository, times(1))
+                    .findAllByLoan_id(loanScheduleEvent.loanId());
+            assertEquals(1, loanSchedules.size());
         });
     }
 }

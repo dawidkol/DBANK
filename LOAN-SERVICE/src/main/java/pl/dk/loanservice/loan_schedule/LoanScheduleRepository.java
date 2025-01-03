@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import pl.dk.loanservice.loan.Loan;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,4 +23,5 @@ public interface LoanScheduleRepository extends JpaRepository<LoanSchedule, Stri
            "WHERE ls.deadline < CURRENT_DATE AND ls.paymentStatus = 'UNPAID'")
     int setPaymentStatusFromUnpaidTo(@Param("newStatus") PaymentStatus newStatus);
 
+    List<LoanSchedule> findAllByLoan_id(String loanId);
 }
