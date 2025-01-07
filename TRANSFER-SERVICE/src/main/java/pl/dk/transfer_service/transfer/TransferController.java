@@ -41,9 +41,9 @@ class TransferController {
         return ResponseEntity.ok(transferById);
     }
 
-    @GetMapping
+    @GetMapping("/accounts/{accountNumber}")
     public ResponseEntity<List<TransferDto>> getAllTransfersFromAccount(
-            @Pattern(regexp = "\\d{26}") @RequestParam String accountNumber,
+            @Pattern(regexp = "\\d{26}") @PathVariable String accountNumber,
             @RequestParam(required = false, defaultValue = PAGE_DEFAULT) int page,
             @RequestParam(required = false, defaultValue = SIZE_DEFAULT) int size) {
         List<TransferDto> allTransfersFromAccount = transferService.getAllTransfersFromAccount(accountNumber, page, size);

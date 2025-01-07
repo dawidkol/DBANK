@@ -4,10 +4,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +31,7 @@ import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -164,6 +162,38 @@ class TransferControllerTest {
             assertTrue(transferDtoResponseEntity200.getStatusCode().isSameCodeAs(HttpStatus.OK));
         });
 
+        // 5. User wants to retrieve all his transfers. Expected status code: 200 OK
+        // Given When
+        ResponseEntity<List<TransferDto>> allAccountTransfers = testRestTemplate.exchange(
+                "/transfers/accounts/{accountNumber}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<TransferDto>>() {
+                }, createTransferDto.senderAccountNumber());
 
+        // Then
+        assertAll(() -> {
+            assertTrue(allAccountTransfers.getStatusCode().isSameCodeAs(HttpStatus.OK));
+            Assertions.assertEquals(1, allAccountTransfers.getBody().size() );
+
+        });
+
+        // 6. User wants to get all transfer from given account to other account. Expected status code: 200 OK
+        // Given When
+        ResponseEntity<List<TransferDto>> allTransfersFromAccountToAccount = testRestTemplate.exchange(
+                "/transfers?senderAccountNumber={senderAccountNumber}&recipientAccountNumber={recipientAccountNumber}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<TransferDto>>() {},
+                createTransferDto.senderAccountNumber(),
+                createTransferDto.recipientAccountNumber());
+
+        // Then
+        assertAll(() -> {
+            assertTrue(allTransfersFromAccountToAccount.getStatusCode().isSameCodeAs(HttpStatus.OK));
+            Assertions.assertEquals(1, allTransfersFromAccountToAccount.getBody().size() );
+        });
     }
+
+
 }
