@@ -13,3 +13,8 @@ eureka:
     register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8000/eureka
+
+scheduler:
+  transfer: 0 0 6 * * ?
+
+

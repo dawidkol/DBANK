@@ -4,10 +4,7 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,7 +30,10 @@ import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
 import java.math.BigDecimal;
+import java.net.URI;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -44,7 +44,8 @@ import static pl.dk.transfer_service.kafka.KafkaConstants.ACCOUNT_DTO_TRUSTED_PA
 @EmbeddedKafka(topics = KafkaConstants.CREATE_TRANSFER_EVENT)
 @DirtiesContext
 @TestPropertySource(properties = {"spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
-        "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}"})
+        "spring.kafka.admin.properties.bootstrap.servers=${spring.embedded.kafka.brokers}",
+        "eureka.client.enabled=false"})
 @Transactional
 class TransferControllerTest {
 
@@ -100,7 +101,7 @@ class TransferControllerTest {
                 .recipientAccountNumber(recipientAccount)
                 .amount(BigDecimal.valueOf(1500.50))
                 .currencyType("PLN")
-                .transferDate(LocalDateTime.now().plusMonths(1))
+                .transferDate(LocalDateTime.now().plusMinutes(1))
                 .description("Payment for invoice #12345")
                 .build();
     }
@@ -111,8 +112,8 @@ class TransferControllerTest {
     }
 
     @Test
-    @DisplayName("It should return 404 for invalid recipient account and 201 for valid transfer with Kafka event")
-    void itShouldReturn404ForInvalidRecipientAccountAnd201ForValidTransferWithKafkaEvent() {
+    @DisplayName("It should handle transfer lifecycle with various scenarios")
+    void itShouldHandleTransferLifecycleWithVariousScenarios() {
         // 1. User wants to create transfer with invalid recipient account. Expected status code: 404 NOT_FOUND
         // Given
         Mockito.when(accountFeignClient.getAccountById(senderAccount))
@@ -164,6 +165,77 @@ class TransferControllerTest {
             assertTrue(transferDtoResponseEntity200.getStatusCode().isSameCodeAs(HttpStatus.OK));
         });
 
+        // 5. User wants to retrieve all his transfers. Expected status code: 200 OK
+        // Given When
+        ResponseEntity<List<TransferDto>> allAccountTransfers = testRestTemplate.exchange(
+                "/transfers/accounts/{accountNumber}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<TransferDto>>() {
+                }, createTransferDto.senderAccountNumber());
+
+        // Then
+        assertAll(() -> {
+            assertTrue(allAccountTransfers.getStatusCode().isSameCodeAs(HttpStatus.OK));
+            Assertions.assertEquals(1, allAccountTransfers.getBody().size());
+
+        });
+
+        // 6. User wants to get all transfer from given account to other account. Expected status code: 200 OK
+        // Given When
+        ResponseEntity<List<TransferDto>> allTransfersFromAccountToAccount = testRestTemplate.exchange(
+                "/transfers?senderAccountNumber={senderAccountNumber}&recipientAccountNumber={recipientAccountNumber}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<TransferDto>>() {
+                },
+                createTransferDto.senderAccountNumber(),
+                createTransferDto.recipientAccountNumber());
+
+        // Then
+        assertAll(() -> {
+            assertTrue(allTransfersFromAccountToAccount.getStatusCode().isSameCodeAs(HttpStatus.OK));
+            Assertions.assertEquals(1, allTransfersFromAccountToAccount.getBody().size());
+        });
+
+        // 7. User wants to create scheduled transfer. Expected status code: 201 CREATED
+        // Given
+        CreateTransferDto createTransferDtoScheduled = CreateTransferDto.builder()
+                .senderAccountNumber(senderAccount)
+                .recipientAccountNumber(recipientAccount)
+                .amount(createTransferDto.amount())
+                .currencyType(createTransferDto.currencyType())
+                .transferDate(LocalDateTime.now().plusDays(1))
+                .description(createTransferDto.description())
+                .build();
+
+        ResponseEntity<TransferDto> scheduledTransferResponse = testRestTemplate.postForEntity(
+                "/transfers",
+                createTransferDtoScheduled,
+                TransferDto.class);
+
+        // Then
+        assertAll(() -> {
+            assertTrue(scheduledTransferResponse.getStatusCode().isSameCodeAs(HttpStatus.CREATED));
+            assertEquals(TransferStatus.SCHEDULED.name(), scheduledTransferResponse.getBody().transferStatus());
+        });
+
+        // 8. User wants to cancel scheduled transfer. Expected status code: 204 NO_CONTENT
+        // Given
+        String scheduledTransferId = scheduledTransferResponse.getBody().transferId();
+
+        // When
+        ResponseEntity<Object> cancelScheduledTransferResponse = testRestTemplate.exchange("/transfers/{transferId}/cancel",
+                HttpMethod.DELETE,
+                null,
+                new ParameterizedTypeReference<Object>() {
+                }
+                , scheduledTransferId);
+
+        assertAll(() -> {
+            assertEquals(HttpStatus.NO_CONTENT, cancelScheduledTransferResponse.getStatusCode());
+        });
 
     }
+
 }

@@ -16,11 +16,15 @@ import pl.dk.transfer_service.transfer.TransferStatus;
 import java.net.SocketTimeoutException;
 
 @Component
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Slf4j
 class AccountServiceKafkaConsumer {
 
     private final TransferService transferService;
+
+    public AccountServiceKafkaConsumer(TransferService transferService) {
+        this.transferService = transferService;
+    }
 
     @KafkaListener(topics = {KafkaConstants.PROCESS_TRANSFER_EVENT},
             properties = "spring.json.value.default.type=pl.dk.transfer_service.kafka.consumer.dtos.ResponseTransferEvent")
