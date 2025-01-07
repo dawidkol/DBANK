@@ -18,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import pl.dk.transfer_service.constants.TransferServiceConstants;
 import pl.dk.transfer_service.exception.InsufficientBalanceException;
 import pl.dk.transfer_service.exception.TransferNotFoundException;
+import pl.dk.transfer_service.exception.TransferStatusException;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
@@ -28,9 +29,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static pl.dk.transfer_service.constants.TransferServiceConstants.*;
 import static pl.dk.transfer_service.transfer.TransferStatus.*;
 
@@ -44,6 +48,7 @@ class TransferServiceTest {
     KafkaTemplate<String, TransferEvent> kafkaTemplate;
     private TransferService underTest;
     private AutoCloseable autoCloseable;
+    private String transferScheduler;
 
     AccountDto sender;
     AccountDto recipient;
@@ -64,7 +69,8 @@ class TransferServiceTest {
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
-        underTest = new TransferServiceImpl(transferRepository, accountFeignClient, kafkaTemplate);
+        transferScheduler = "0 0 6 * * ?";
+        underTest = new TransferServiceImpl(transferRepository, accountFeignClient, kafkaTemplate, transferScheduler);
 
         senderUserId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
         senderAccountNumber = "00000000000000000000000000";
@@ -123,7 +129,7 @@ class TransferServiceTest {
                 .thenReturn(ResponseEntity.of(Optional.of(sender)));
         Mockito.when(accountFeignClient.getAccountById(recipientAccountNumber))
                 .thenReturn(ResponseEntity.of(Optional.of(recipient)));
-        Mockito.when(transferRepository.save(Mockito.any(Transfer.class))).thenReturn(transfer);
+        Mockito.when(transferRepository.save(any(Transfer.class))).thenReturn(transfer);
 
         // When
         TransferDto result = underTest.createTransfer(createTransferDto);
@@ -133,7 +139,7 @@ class TransferServiceTest {
         assertAll(
                 () -> {
                     Mockito.verify(accountFeignClient, Mockito.times(2))
-                            .getAccountById(Mockito.any(String.class));
+                            .getAccountById(any(String.class));
                     Mockito.verify(transferRepository, Mockito.times(1))
                             .save(transferArgumentCaptor.capture());
                     assertNotNull(result.transferId());
@@ -162,7 +168,7 @@ class TransferServiceTest {
                 .thenReturn(ResponseEntity.of(Optional.of(mockSender)));
         Mockito.when(accountFeignClient.getAccountById(recipientAccountNumber))
                 .thenReturn(ResponseEntity.of(Optional.of(recipient)));
-        Mockito.when(transferRepository.save(Mockito.any(Transfer.class))).thenReturn(transfer);
+        Mockito.when(transferRepository.save(any(Transfer.class))).thenReturn(transfer);
 
         // When
         assertThrows(InsufficientBalanceException.class, () -> underTest.createTransfer(createTransferDto));
@@ -171,7 +177,7 @@ class TransferServiceTest {
         assertAll(
                 () -> {
                     Mockito.verify(accountFeignClient, Mockito.times(2))
-                            .getAccountById(Mockito.any(String.class));
+                            .getAccountById(any(String.class));
                 }
         );
     }
@@ -298,4 +304,105 @@ class TransferServiceTest {
         });
     }
 
+    @Test
+    @DisplayName("It should cancel scheduled transfer successfully")
+    void itShouldCancelScheduledTransferSuccessfully() {
+        // Given
+        Transfer scheduledTransfer = Transfer.builder()
+                .id(transfer.getId())
+                .senderAccountNumber(transfer.getSenderAccountNumber())
+                .recipientAccountNumber(transfer.getRecipientAccountNumber())
+                .amount(transfer.getAmount())
+                .currencyType(transfer.getCurrencyType())
+                .transferDate(transfer.getTransferDate().plusDays(1))
+                .transferStatus(SCHEDULED)
+                .description(transfer.getDescription())
+                .balanceAfterTransfer(transfer.getBalanceAfterTransfer())
+                .build();
+        Mockito.when(transferRepository.findByIdAndTransferStatus(scheduledTransfer.getId(), SCHEDULED))
+                .thenReturn(Optional.of(scheduledTransfer));
+
+        // When
+        underTest.cancelScheduledTransfer(scheduledTransfer.getId());
+
+        // Then
+        assertAll(() -> {
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findByIdAndTransferStatus(scheduledTransfer.getId(), SCHEDULED);
+        });
+    }
+
+    @Test
+    @DisplayName("It should throw TransferStatusException when user tries to cancel transfer with invalid transfer date")
+    void itShouldThrowTransferStatusExceptionWhenUserTriesToCancelTransferWithInvalidTransferDate() {
+        // Given
+        Transfer scheduledTransfer = Transfer.builder()
+                .id(transfer.getId())
+                .senderAccountNumber(transfer.getSenderAccountNumber())
+                .recipientAccountNumber(transfer.getRecipientAccountNumber())
+                .amount(transfer.getAmount())
+                .currencyType(transfer.getCurrencyType())
+                .transferDate(transfer.getTransferDate().minusDays(1))
+                .transferStatus(SCHEDULED)
+                .description(transfer.getDescription())
+                .balanceAfterTransfer(transfer.getBalanceAfterTransfer())
+                .build();
+        Mockito.when(transferRepository.findByIdAndTransferStatus(scheduledTransfer.getId(), SCHEDULED))
+                .thenReturn(Optional.of(scheduledTransfer));
+
+        // When Then
+        assertAll(() -> {
+            assertThrows(TransferStatusException.class, () ->
+                    underTest.cancelScheduledTransfer(scheduledTransfer.getId()));
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findByIdAndTransferStatus(scheduledTransfer.getId(), SCHEDULED);
+        });
+    }
+
+    @Test
+    @DisplayName("It should throw TransferNotFoundException when user tries to cancel transfer with invalid id")
+    void itShouldThrowTransferNotFoundExceptionWhenUserTriesToCancelTransferWithInvalidId() {
+        // Given
+        Transfer transferWithId = Transfer.builder().id(UUID.randomUUID().toString()).build();
+        Mockito.when(transferRepository.findByIdAndTransferStatus(transferWithId.getId(), SCHEDULED))
+                .thenReturn(Optional.empty());
+
+        // When Then
+        assertAll(() -> {
+            assertThrows(TransferNotFoundException.class, () ->
+                    underTest.cancelScheduledTransfer(transferWithId.getId()));
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findByIdAndTransferStatus(transferWithId.getId(), SCHEDULED);
+        });
+    }
+
+    @Test
+    @DisplayName("It should execute scheduled transfers successfully")
+    void itShouldExecuteScheduledTransfersSuccessfully() {
+        // Given
+        Transfer scheduledTransfer = Transfer.builder()
+                .id(transfer.getId())
+                .senderAccountNumber(transfer.getSenderAccountNumber())
+                .recipientAccountNumber(transfer.getRecipientAccountNumber())
+                .amount(transfer.getAmount())
+                .currencyType(transfer.getCurrencyType())
+                .transferDate(transfer.getTransferDate().plusDays(1))
+                .transferStatus(SCHEDULED)
+                .description(transfer.getDescription())
+                .balanceAfterTransfer(transfer.getBalanceAfterTransfer())
+                .build();
+        Mockito.when(transferRepository.findAllByTransferStatusAndTransferDateBefore(eq(SCHEDULED),
+                any(LocalDateTime.class))).thenReturn(List.of(scheduledTransfer));
+
+        // When
+        underTest.executeScheduledTransfers();
+        ArgumentCaptor<LocalDateTime> localDateTimeArgumentCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+
+        // Then
+        assertAll(() -> {
+            Mockito.verify(transferRepository, Mockito.times(1))
+                    .findAllByTransferStatusAndTransferDateBefore(eq(SCHEDULED), localDateTimeArgumentCaptor.capture());
+        });
+
+    }
 }

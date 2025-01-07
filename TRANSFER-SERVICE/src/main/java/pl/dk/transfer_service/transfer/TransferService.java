@@ -16,4 +16,9 @@ public interface TransferService {
     List<TransferDto> getAllTransfersFromAccount(String accountNumber, int page, int size);
 
     List<TransferDto> getAllTransferFromTo(String senderAccountNumber, String recipientAccountNumber, int page, int size);
+
+    void executeScheduledTransfers();
+
+    void cancelScheduledTransfer(String transferId);
+
 }

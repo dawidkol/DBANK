@@ -63,4 +63,10 @@ class TransferController {
         return ResponseEntity.ok(allTransferFromTo);
     }
 
+    @DeleteMapping("/{transferId}/cancel")
+    public ResponseEntity<?> cancelScheduledTransfer(@PathVariable String transferId) {
+        transferService.cancelScheduledTransfer(transferId);
+        return ResponseEntity.noContent().build();
+    }
+
 }
