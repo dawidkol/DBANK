@@ -52,7 +52,6 @@ class AccountBalanceServiceImpl implements AccountBalanceService {
         AccountBalanceDto result = balanceDtoAtomicReference.get();
         buildAndPublishAccountEvent(currencyType, amount, accountNumber);
         return result;
-
     }
 
     private void isAccountActive(Account account) {

@@ -23,6 +23,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
+        retries: 3
         spring.json.use.type.headers: false
       group-id: account-service-events-listener-group
     listener:

@@ -6,18 +6,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import pl.dk.accounts_service.account.AccountService;
-import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account_balance.AccountBalanceService;
 import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
 import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
-import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.kafka.consumer.dtos.TransferEvent;
 import pl.dk.accounts_service.kafka.producer.TransferProducerService;
 
 import java.math.BigDecimal;
 
 import static pl.dk.accounts_service.kafka.KafkaConstants.CREATE_TRANSFER_EVENT;
+import static pl.dk.accounts_service.enums.TransferStatus.*;
 
 @Component
 @RequiredArgsConstructor
@@ -38,9 +36,9 @@ class TransferEventConsumer {
         try {
             updateAccountBalance(transferEvent.senderAccountNumber(), amount.negate(), currencyType);
             updateAccountBalance(transferEvent.recipientAccountNumber(), amount, currencyType);
-            transferProducerService.processTransferSuccessfully(transferEvent);
-        } catch (AccountNotExistsException ex) {
-            transferProducerService.processTransferFailure(transferEvent);
+            transferProducerService.processTransfer(transferEvent, COMPLETED);
+        } catch (RuntimeException ex) {
+            transferProducerService.processTransfer(transferEvent, FAILED);
         }
     }
 
