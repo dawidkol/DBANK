@@ -3,7 +3,7 @@ CREATE TABLE accounts
 (
     account_number VARCHAR(26) NOT NULL PRIMARY KEY,
     account_type   VARCHAR(20),
-    balance        DECIMAL,
+    balance        DECIMAL(19,2),
     user_id        VARCHAR(255),
     created_at     TIMESTAMP,
     created_by     VARCHAR(100),
