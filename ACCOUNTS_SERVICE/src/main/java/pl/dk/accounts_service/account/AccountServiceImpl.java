@@ -70,45 +70,45 @@ class AccountServiceImpl implements AccountService {
                 });
     }
 
-    @Override
-    @Transactional
-    public AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue) {
-        AccountDto accountDto = accountRepository.findById(accountId)
-                .map(account -> {
-                    isAccountActive(account);
-                    updateAccountBalance(updateByValue, account);
-                    return AccountDtoMapper.map(account);
-                })
-                .orElseThrow(() ->
-                        new AccountNotExistsException("Account with id: %s not exists"));
-        buildAndPublishAccountEvent(updateByValue, accountDto.accountNumber());
-        return accountDto;
-    }
+//    @Override
+//    @Transactional
+//    public AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue) {
+//        AccountDto accountDto = accountRepository.findById(accountId)
+//                .map(account -> {
+//                    isAccountActive(account);
+//                    updateAccountBalance(updateByValue, account);
+//                    return AccountDtoMapper.map(account);
+//                })
+//                .orElseThrow(() ->
+//                        new AccountNotExistsException("Account with id: %s not exists"));
+//        buildAndPublishAccountEvent(updateByValue, accountDto.accountNumber());
+//        return accountDto;
+//    }
 
-    private void buildAndPublishAccountEvent(BigDecimal updateByValue, String accountId) {
-        AccountEventPublisher accountEventPublisher = AccountEventPublisher.builder()
-                .updatedByValue(updateByValue)
-                .accountId(accountId)
-                .build();
-        applicationEventPublisher.publishEvent(accountEventPublisher);
-    }
+//    private void buildAndPublishAccountEvent(BigDecimal updateByValue, String accountId) {
+//        AccountEventPublisher accountEventPublisher = AccountEventPublisher.builder()
+//                .updatedByValue(updateByValue)
+//                .accountId(accountId)
+//                .build();
+//        applicationEventPublisher.publishEvent(accountEventPublisher);
+//    }
 
-    private void updateAccountBalance(BigDecimal updateByValue, Account account) {
-        BigDecimal currentBalance = account.getBalance();
-        BigDecimal absAmount = updateByValue.abs();
-        int result = currentBalance.compareTo(absAmount);
-        if (result < 0) {
-            throw new AccountBalanceException("Insufficient funds in the account");
-        }
-        BigDecimal updatedAccountBalance = currentBalance.add(updateByValue);
-        account.setBalance(updatedAccountBalance);
-    }
+//    private void updateAccountBalance(BigDecimal updateByValue, Account account) {
+//        BigDecimal currentBalance = account.getBalance();
+//        BigDecimal absAmount = updateByValue.abs();
+//        int result = currentBalance.compareTo(absAmount);
+//        if (result < 0) {
+//            throw new AccountBalanceException("Insufficient funds in the account");
+//        }
+//        BigDecimal updatedAccountBalance = currentBalance.add(updateByValue);
+//        account.setBalance(updatedAccountBalance);
+//    }
 
-    private void isAccountActive(Account account) {
-        if (!account.getActive()) {
-            throw new AccountInactiveException("Account with number: %s is inactive".formatted(account.getAccountNumber()));
-        }
-    }
+//    private void isAccountActive(Account account) {
+//        if (!account.getActive()) {
+//            throw new AccountInactiveException("Account with number: %s is inactive".formatted(account.getAccountNumber()));
+//        }
+//    }
 
     @Override
     public List<AccountDto> getAllUserAccounts(String userId, int page, int size) {

@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.AccountService;
 import pl.dk.accounts_service.account.dtos.AccountDto;
+import pl.dk.accounts_service.account_balance.AccountBalanceService;
+import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
+import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.kafka.consumer.dtos.TransferEvent;
 import pl.dk.accounts_service.kafka.producer.TransferProducerService;
@@ -22,7 +25,7 @@ import static pl.dk.accounts_service.kafka.KafkaConstants.CREATE_TRANSFER_EVENT;
 class TransferEventConsumer {
 
     private final TransferProducerService transferProducerService;
-    private final AccountService accountService;
+    private final AccountBalanceService accountBalanceService;
 
     @KafkaListener(topics = {CREATE_TRANSFER_EVENT},
             properties = "spring.json.value.default.type=pl.dk.accounts_service.kafka.consumer.dtos.TransferEvent")
@@ -31,19 +34,24 @@ class TransferEventConsumer {
         TransferEvent transferEvent = consumerRecord.value();
         log.info("ConsumerRecord: {}", consumerRecord);
         BigDecimal amount = transferEvent.amount();
+        String currencyType = transferEvent.currencyType();
         try {
-            updateAccountBalance(transferEvent.senderAccountNumber(), amount.negate());
-            updateAccountBalance(transferEvent.recipientAccountNumber(), amount);
+            updateAccountBalance(transferEvent.senderAccountNumber(), amount.negate(), currencyType);
+            updateAccountBalance(transferEvent.recipientAccountNumber(), amount, currencyType);
             transferProducerService.processTransferSuccessfully(transferEvent);
         } catch (AccountNotExistsException ex) {
             transferProducerService.processTransferFailure(transferEvent);
         }
     }
 
-    private void updateAccountBalance(String accountNumber, BigDecimal amount) {
+    private void updateAccountBalance(String accountNumber, BigDecimal updateByValue, String currencyType) {
         log.info("Updating sender account balance, account number {}", accountNumber);
-        AccountDto accountDto = accountService.updateAccountBalance(accountNumber, amount);
-        log.info("Updated account balance, account number {}, current account balance {}", accountNumber, accountDto);
+        UpdateAccountBalanceDto updateAccountBalanceDto = UpdateAccountBalanceDto.builder()
+                .updateByValue(updateByValue)
+                .currencyType(currencyType)
+                .build();
+        AccountBalanceDto accountBalanceDto = accountBalanceService.updateAccountBalance(accountNumber, updateAccountBalanceDto);
+        log.info("Updated account balance, account number {}, current account balance {}, currency type {}", accountNumber, accountBalanceDto.balance(), accountBalanceDto.currencyType());
     }
 
 }

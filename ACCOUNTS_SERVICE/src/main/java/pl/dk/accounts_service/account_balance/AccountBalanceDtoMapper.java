@@ -6,6 +6,7 @@ class AccountBalanceDtoMapper {
 
     public static AccountBalanceDto map(AccountBalance accountBalance) {
         return AccountBalanceDto.builder()
+                .accountBalanceId(accountBalance.getId())
                 .currencyType(accountBalance.getCurrencyType())
                 .balance(accountBalance.getBalance())
                 .build();

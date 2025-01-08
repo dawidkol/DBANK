@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.Account;
 import pl.dk.accounts_service.account.AccountRepository;
 import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
+import pl.dk.accounts_service.account_balance.CurrencyType;
 import pl.dk.accounts_service.account_transaction.dtos.AccountTransactionCalculationDto;
 import pl.dk.accounts_service.account_transaction.dtos.AccountTransactionDto;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
@@ -42,14 +43,16 @@ class AccountTransactionServiceImpl implements AccountTransactionService {
                         new AccountNotExistsException("Account with id: %s not exists".formatted(event.accountId())));
         BigDecimal balance = account.getBalance();
         BigDecimal amount = event.updatedByValue();
-        AccountTransaction accountTransactionToSave = buildAccountTransactionObject(account, amount, balance);
+        CurrencyType currencyType = event.currencyType();
+        AccountTransaction accountTransactionToSave = buildAccountTransactionObject(currencyType, account, amount, balance);
         AccountTransaction savedTransaction = accountTransactionRepository.save(accountTransactionToSave);
         log.info("Account transaction for accountId: {}, saved with id: {}", event.accountId(), savedTransaction.getId());
     }
 
-    private AccountTransaction buildAccountTransactionObject(Account account, BigDecimal amount, BigDecimal balance) {
+    private AccountTransaction buildAccountTransactionObject(CurrencyType currencyType, Account account, BigDecimal amount, BigDecimal balance) {
         return AccountTransaction.builder()
                 .transactionDate(account.getCreatedAt())
+                .currencyType(currencyType)
                 .amount(amount)
                 .balanceBeforeTransaction(balance.subtract(amount))
                 .balanceAfterTransaction(balance)

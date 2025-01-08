@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-import pl.dk.accounts_service.account.dtos.UpdateAccountBalance;
-import pl.dk.accounts_service.constants.PagingAndSorting;
+import pl.dk.accounts_service.account_balance.AccountBalanceService;
+import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
+import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
 
 import java.net.URI;
 import java.util.List;
@@ -22,6 +23,7 @@ import static pl.dk.accounts_service.constants.PagingAndSorting.SIZE_DEFAULT;
 class AccountController {
 
     private final AccountService accountService;
+    private final AccountBalanceService accountBalanceService;
 
     @PostMapping
     public ResponseEntity<AccountDto> createAccount(@Valid @RequestBody CreateAccountDto createAccountDto) {
@@ -45,10 +47,10 @@ class AccountController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{accountId}")
-    public ResponseEntity<AccountDto> updateBalance(@PathVariable String accountId, @RequestBody UpdateAccountBalance updateAccountBalance) {
-        AccountDto accountDto = accountService.updateAccountBalance(accountId, updateAccountBalance.updateByValue());
-        return ResponseEntity.ok(accountDto);
+    @PatchMapping("/{accountNumber}")
+    public ResponseEntity<AccountBalanceDto> updateBalance(@PathVariable String accountNumber, @RequestBody UpdateAccountBalanceDto updateAccountBalanceDto) {
+        AccountBalanceDto accountBalanceDto = accountBalanceService.updateAccountBalance(accountNumber, updateAccountBalanceDto);
+        return ResponseEntity.ok(accountBalanceDto);
     }
 
     @GetMapping("/{userId}/all")
