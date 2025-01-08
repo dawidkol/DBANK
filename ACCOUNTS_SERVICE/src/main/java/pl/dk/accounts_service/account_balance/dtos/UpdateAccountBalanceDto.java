@@ -11,7 +11,6 @@ public record UpdateAccountBalanceDto(
         @NotBlank
         @NotNull
         String currencyType,
-        @NotBlank
         @NotNull
         BigDecimal updateByValue
 ) {

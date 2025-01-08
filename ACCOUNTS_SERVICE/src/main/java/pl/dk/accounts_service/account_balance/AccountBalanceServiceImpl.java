@@ -9,7 +9,9 @@ import pl.dk.accounts_service.account.AccountRepository;
 import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
 import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
 import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
+import pl.dk.accounts_service.enums.CurrencyType;
 import pl.dk.accounts_service.exception.AccountBalanceException;
+import pl.dk.accounts_service.exception.AccountBalanceNotFoundException;
 import pl.dk.accounts_service.exception.AccountInactiveException;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 
@@ -36,11 +38,13 @@ class AccountBalanceServiceImpl implements AccountBalanceService {
         AtomicReference<AccountBalanceDto> balanceDtoAtomicReference = new AtomicReference<>();
         accountBalanceRepository.findFirstByAccount_AccountNumberAndCurrencyType(accountNumber, currencyType)
                 .ifPresentOrElse(accountBalance -> {
-                    validateAndUpdateAccountBalance(accountBalance.getBalance(), account);
+                    AccountBalance ac = validateAndUpdateAccountBalance(updateAccountBalanceDto.updateByValue(), accountBalance);
+                    balanceDtoAtomicReference.set(AccountBalanceDtoMapper.map(ac));
                 }, () -> {
                     int result = updateAccountBalanceDto.updateByValue().compareTo(BigDecimal.ZERO);
                     if (result < 0) {
-                        throw new AccountBalanceException("Insufficient funds in the account");
+                        throw new AccountBalanceException("Account balance for: %s can't be less than O"
+                                .formatted(account.getAccountNumber()));
                     }
                     AccountBalance savedAccountBalance = createAndSaveNewAccountBalance(amount, account, currencyType);
                     balanceDtoAtomicReference.set(AccountBalanceDtoMapper.map(savedAccountBalance));
@@ -75,14 +79,30 @@ class AccountBalanceServiceImpl implements AccountBalanceService {
         applicationEventPublisher.publishEvent(accountEventPublisher);
     }
 
-    private void validateAndUpdateAccountBalance(BigDecimal updateByValue, Account account) {
-        BigDecimal currentBalance = account.getBalance();
-        BigDecimal absAmount = updateByValue.abs();
-        int result = currentBalance.compareTo(absAmount);
-        if (result < 0) {
-            throw new AccountBalanceException("Insufficient funds in the account");
+    private AccountBalance validateAndUpdateAccountBalance(BigDecimal updateByValue, AccountBalance accountBalance) {
+        BigDecimal currentBalance = accountBalance.getBalance();
+        int isLowerThanZero = updateByValue.compareTo(BigDecimal.ZERO);
+        if (isLowerThanZero < 0) {
+            BigDecimal absAmount = updateByValue.abs();
+            int result = currentBalance.compareTo(absAmount);
+            if (result < 0) {
+                throw new AccountBalanceException("Account balance for: %s can't be less than O"
+                        .formatted(accountBalance.getAccount().getAccountNumber()));
+            }
         }
         BigDecimal updatedAccountBalance = currentBalance.add(updateByValue);
-        account.setBalance(updatedAccountBalance);
+        accountBalance.setBalance(updatedAccountBalance);
+        return accountBalance;
+    }
+
+    @Override
+    public AccountBalanceDto getAccountBalanceByAccountNumberAndCurrencyType(String accountNumber, String currencyType) {
+        CurrencyType cT = CurrencyType.valueOf(currencyType.toUpperCase());
+        return accountBalanceRepository.findFirstByAccount_AccountNumberAndCurrencyType(accountNumber, cT)
+                .map(AccountBalanceDtoMapper::map)
+                .orElseThrow(() ->
+                        new AccountBalanceNotFoundException("AccountBalance with accountNumber %s and currencyType %s not found"
+                                .formatted(accountNumber, currencyType))
+                );
     }
 }

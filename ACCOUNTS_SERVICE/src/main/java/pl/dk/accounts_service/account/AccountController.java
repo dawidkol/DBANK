@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
+import pl.dk.accounts_service.account_balance.AccountBalance;
 import pl.dk.accounts_service.account_balance.AccountBalanceService;
 import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
 import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
@@ -48,7 +49,8 @@ class AccountController {
     }
 
     @PatchMapping("/{accountNumber}")
-    public ResponseEntity<AccountBalanceDto> updateBalance(@PathVariable String accountNumber, @RequestBody UpdateAccountBalanceDto updateAccountBalanceDto) {
+    public ResponseEntity<AccountBalanceDto> updateBalance(@PathVariable String accountNumber,
+                                                           @Valid @RequestBody UpdateAccountBalanceDto updateAccountBalanceDto) {
         AccountBalanceDto accountBalanceDto = accountBalanceService.updateAccountBalance(accountNumber, updateAccountBalanceDto);
         return ResponseEntity.ok(accountBalanceDto);
     }
@@ -59,6 +61,13 @@ class AccountController {
                                                                @RequestParam(required = false, defaultValue = SIZE_DEFAULT) int size) {
         List<AccountDto> allUserAccounts = accountService.getAllUserAccounts(userId, page, size);
         return ResponseEntity.ok(allUserAccounts);
+    }
+
+    @GetMapping("/{accountNumber}/balance")
+    public ResponseEntity<AccountBalanceDto> getAccountBalanceByAccountNumberAndCurrencyType(@PathVariable String accountNumber,
+                                                                                             @RequestParam String currencyType) {
+        AccountBalanceDto accountBalanceByAccountNumberAndCurrencyType = accountBalanceService.getAccountBalanceByAccountNumberAndCurrencyType(accountNumber, currencyType);
+        return ResponseEntity.ok(accountBalanceByAccountNumberAndCurrencyType);
     }
 
 }

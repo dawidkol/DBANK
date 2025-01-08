@@ -3,8 +3,8 @@ package pl.dk.accounts_service.account;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import pl.dk.accounts_service.enums.AccountType;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,20 +19,17 @@ public class Account extends BaseEntity{
     @Enumerated(EnumType.STRING)
     @NotNull
     private AccountType accountType;
-    @PositiveOrZero
-    @NotNull
-    private BigDecimal balance;
     @NotBlank
     private String userId;
     @NotNull
     private Boolean active;
 
     @Builder
-    public Account(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String accountNumber, AccountType accountType, BigDecimal balance, String userId, Boolean active) {
+    public Account(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy,
+                   String accountNumber, AccountType accountType, String userId, Boolean active) {
         super(createdAt, createdBy, updatedAt, updatedBy);
         this.accountNumber = accountNumber;
         this.accountType = accountType;
-        this.balance = balance;
         this.userId = userId;
         this.active = active;
     }

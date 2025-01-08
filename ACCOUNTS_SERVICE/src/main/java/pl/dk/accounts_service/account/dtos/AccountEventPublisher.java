@@ -1,7 +1,7 @@
 package pl.dk.accounts_service.account.dtos;
 
 import lombok.Builder;
-import pl.dk.accounts_service.account_balance.CurrencyType;
+import pl.dk.accounts_service.enums.CurrencyType;
 
 import java.math.BigDecimal;
 

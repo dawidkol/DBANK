@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import pl.dk.accounts_service.account.Account;
 import pl.dk.accounts_service.account.BaseEntity;
+import pl.dk.accounts_service.enums.CurrencyType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-class AccountBalance extends BaseEntity {
+public class AccountBalance extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,7 +31,8 @@ class AccountBalance extends BaseEntity {
 
     @Builder
 
-    public AccountBalance(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String id, CurrencyType currencyType, BigDecimal balance, Account account) {
+    public AccountBalance(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt,
+                          String updatedBy, String id, CurrencyType currencyType, BigDecimal balance, Account account) {
         super(createdAt, createdBy, updatedAt, updatedBy);
         this.id = id;
         this.currencyType = currencyType;

@@ -1,4 +1,4 @@
-package pl.dk.accounts_service.account;
+package pl.dk.accounts_service.enums;
 
 public enum AccountType {
     SAVINGS,

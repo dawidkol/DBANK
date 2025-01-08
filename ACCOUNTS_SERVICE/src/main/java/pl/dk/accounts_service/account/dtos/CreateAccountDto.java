@@ -12,11 +12,7 @@ import java.math.BigDecimal;
 public record CreateAccountDto(
         @AccountTypeEnum
         String accountType,
-        @PositiveOrZero
-        @NotNull
-        BigDecimal balance,
         @NotBlank
         String userId
-
 ) {
 }

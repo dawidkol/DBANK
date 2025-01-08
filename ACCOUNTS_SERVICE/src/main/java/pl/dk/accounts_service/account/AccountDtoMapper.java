@@ -2,8 +2,7 @@ package pl.dk.accounts_service.account;
 
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-
-import java.math.BigDecimal;
+import pl.dk.accounts_service.enums.AccountType;
 
 class AccountDtoMapper {
 
@@ -11,7 +10,6 @@ class AccountDtoMapper {
         AccountType accountType = Enum.valueOf(AccountType.class, createAccountDto.accountType().toUpperCase());
         return Account.builder()
                 .accountType(accountType)
-                .balance(createAccountDto.balance())
                 .userId(createAccountDto.userId())
                 .active(true)
                 .build();
@@ -21,7 +19,6 @@ class AccountDtoMapper {
         return AccountDto.builder()
                 .accountNumber(account.getAccountNumber())
                 .accountType(account.getAccountType().toString())
-                .balance(account.getBalance())
                 .userId(account.getUserId())
                 .active(account.getActive())
                 .build();
