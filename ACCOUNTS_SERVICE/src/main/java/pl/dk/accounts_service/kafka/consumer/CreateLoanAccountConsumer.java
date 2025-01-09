@@ -34,7 +34,6 @@ class CreateLoanAccountConsumer {
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
                 .userId(createLoanAccountDto.userId())
                 .accountType(createLoanAccountDto.accountType())
-                .balance(BigDecimal.ZERO)
                 .build();
         AccountDto account = accountService.createAccount(createAccountDto);
 

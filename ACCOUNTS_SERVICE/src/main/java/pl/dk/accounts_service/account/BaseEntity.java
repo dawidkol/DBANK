@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @AllArgsConstructor
 @NoArgsConstructor
-class BaseEntity {
+public class BaseEntity {
 
     @Column(updatable = false)
     @CreatedDate

@@ -8,8 +8,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import pl.dk.accounts_service.account.Account;
-import pl.dk.accounts_service.account.AccountRepository;
-import pl.dk.accounts_service.account.AccountType;
+import pl.dk.accounts_service.account_balance.AccountBalance;
+import pl.dk.accounts_service.account_balance.AccountBalanceRepository;
+import pl.dk.accounts_service.enums.AccountType;
 import pl.dk.accounts_service.account.dtos.AccountEventPublisher;
 import pl.dk.accounts_service.account_transaction.dtos.AccountTransactionCalculationDto;
 import pl.dk.accounts_service.account_transaction.dtos.AccountTransactionDto;
@@ -27,7 +28,7 @@ class AccountTransactionServiceTest {
     @Mock
     private AccountTransactionRepository accountTransactionRepository;
     @Mock
-    private AccountRepository accountRepository;
+    private AccountBalanceRepository accountBalanceRepository;
     private AccountTransactionService underTest;
 
     AutoCloseable autoCloseable;
@@ -47,7 +48,7 @@ class AccountTransactionServiceTest {
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
-        underTest = new AccountTransactionServiceImpl(accountTransactionRepository, accountRepository);
+        underTest = new AccountTransactionServiceImpl(accountTransactionRepository, accountBalanceRepository);
         transactionId = UUID.randomUUID().toString();
         transactionDate = LocalDateTime.now();
         amount = new BigDecimal("500.00");
@@ -59,7 +60,6 @@ class AccountTransactionServiceTest {
         account = Account.builder()
                 .accountNumber("6311399679235673906780514")
                 .accountType(AccountType.CREDIT)
-                .balance(balance)
                 .active(true)
                 .userId(userId)
                 .build();
@@ -108,11 +108,12 @@ class AccountTransactionServiceTest {
         for (int i = 1; i <= 10; i++) {
             AccountTransactionCalculationDto transaction = AccountTransactionCalculationDto.builder()
                     .id(UUID.randomUUID().toString())
-                    .transactionDate(LocalDateTime.now().minusMonths(1).minusDays(i))
+                    .transactionDate(LocalDateTime.now().minusMonths(i))
                     .amount(BigDecimal.valueOf(i))
                     .build();
             accountTransactionList.add(transaction);
         }
+        LocalDateTime now = LocalDateTime.now();
         Mockito.when(accountTransactionRepository.findAllByAccount_UserIdAndTransactionDateIsBetween(
                         any(),
                         any(),
@@ -138,8 +139,9 @@ class AccountTransactionServiceTest {
     @DisplayName("It should save transaction successfully on transaction event")
     void itShouldSaveTransactionSuccessfullyOnTransactionEvent() {
         // Given
-        Mockito.when(accountRepository.findById(any()))
-                .thenReturn(Optional.of(account));
+        AccountBalance accountBalance = AccountBalance.builder().balance(balance).account(account).build();
+        Mockito.when(accountBalanceRepository.findFirstByAccount_AccountNumberAndCurrencyType(any(), any()))
+                .thenReturn(Optional.of(accountBalance));
         Mockito.when(accountTransactionRepository.save(any(AccountTransaction.class)))
                 .thenReturn(transaction);
         AccountEventPublisher accountEventPublisher = AccountEventPublisher.builder()
@@ -152,7 +154,7 @@ class AccountTransactionServiceTest {
 
         // Then
         assertAll(() -> {
-            Mockito.verify(accountRepository, Mockito.times(1)).findById(any());
+            Mockito.verify(accountBalanceRepository, Mockito.times(1)).findFirstByAccount_AccountNumberAndCurrencyType(any(), any());
             Mockito.verify(accountTransactionRepository, Mockito.times(1)).save(any(AccountTransaction.class));
         });
     }
@@ -161,7 +163,7 @@ class AccountTransactionServiceTest {
     @DisplayName("It should throw AccountNotFoundException")
     void itShouldSaveThrowAccountNotExistsException() {
         // Given
-        Mockito.when(accountRepository.findById(any()))
+        Mockito.when(accountBalanceRepository.findById(any()))
                 .thenReturn(Optional.empty());
         Mockito.when(accountTransactionRepository.save(any(AccountTransaction.class)))
                 .thenReturn(transaction);
@@ -173,7 +175,7 @@ class AccountTransactionServiceTest {
         // When Then
         assertAll(() -> {
             assertThrows(AccountNotExistsException.class, () -> underTest.onTransactionEvent(accountEventPublisher));
-            Mockito.verify(accountRepository, Mockito.times(1)).findById(any());
+            Mockito.verify(accountBalanceRepository, Mockito.times(1)).findFirstByAccount_AccountNumberAndCurrencyType(any(), any());
         });
     }
 }

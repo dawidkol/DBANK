@@ -1,9 +1,9 @@
 package pl.dk.accounts_service.kafka.producer;
 
+import pl.dk.accounts_service.enums.TransferStatus;
 import pl.dk.accounts_service.kafka.consumer.dtos.TransferEvent;
 
 public interface TransferProducerService {
 
-    void processTransferSuccessfully(TransferEvent transferEvent);
-    void processTransferFailure(TransferEvent transferEvent);
+    void processTransfer(TransferEvent transferEvent, TransferStatus transferStatus);
 }

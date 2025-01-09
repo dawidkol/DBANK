@@ -3,6 +3,7 @@ package pl.dk.accounts_service.kafka.producer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import pl.dk.accounts_service.enums.TransferStatus;
 import pl.dk.accounts_service.kafka.consumer.dtos.TransferEvent;
 import pl.dk.accounts_service.kafka.producer.dtos.ResponseTransferEvent;
 
@@ -15,14 +16,8 @@ class TransferProducerServiceImpl implements TransferProducerService {
     private final KafkaTemplate<String, ResponseTransferEvent> kafkaTemplate;
 
     @Override
-    public void processTransferSuccessfully(TransferEvent transferEvent) {
-        ResponseTransferEvent producerResponse = buildResponse(transferEvent, TransferStatus.COMPLETED);
-        kafkaTemplate.send(PROCESS_TRANSFER_EVENT, transferEvent.transferId(), producerResponse);
-    }
-
-    @Override
-    public void processTransferFailure(TransferEvent transferEvent) {
-        ResponseTransferEvent producerResponse = buildResponse(transferEvent, TransferStatus.FAILED);
+    public void processTransfer(TransferEvent transferEvent, TransferStatus transferStatus) {
+        ResponseTransferEvent producerResponse = buildResponse(transferEvent, transferStatus);
         kafkaTemplate.send(PROCESS_TRANSFER_EVENT, transferEvent.transferId(), producerResponse);
     }
 

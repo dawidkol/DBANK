@@ -11,6 +11,6 @@ public interface AccountService {
     AccountDto createAccount(CreateAccountDto createAccountDto);
     AccountDto getAccountById(String accountId);
     void deleteAccountById(String accountId);
-    AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue);
+//    AccountDto updateAccountBalance(String accountId, BigDecimal updateByValue);
     List<AccountDto> getAllUserAccounts(String userId, int page, int size);
 }

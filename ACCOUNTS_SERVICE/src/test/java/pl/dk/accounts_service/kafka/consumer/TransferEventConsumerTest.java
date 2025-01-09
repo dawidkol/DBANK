@@ -16,8 +16,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import pl.dk.accounts_service.account.AccountService;
-import pl.dk.accounts_service.account.dtos.AccountDto;
+import pl.dk.accounts_service.account_balance.AccountBalanceService;
+import pl.dk.accounts_service.enums.CurrencyType;
+import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
+import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.kafka.consumer.dtos.TransferEvent;
 
@@ -50,7 +52,7 @@ class TransferEventConsumerTest {
     private TransferEventConsumer transferEventConsumer;
 
     @MockitoBean
-    private AccountService accountService;
+    private AccountBalanceService accountBalanceService;
 
     TransferEvent transferEvent;
 
@@ -64,7 +66,7 @@ class TransferEventConsumerTest {
                 .senderAccountNumber("36310206164628513592651084")
                 .recipientAccountNumber("01112962489695456055040725")
                 .amount(BigDecimal.valueOf(1500.50))
-                .currencyType("PLN")
+                .currencyType(CurrencyType.PLN.name())
                 .transferDate(LocalDateTime.parse("2024-12-19T14:30:00"))
                 .transferStatus("COMPLETED")
                 .build();
@@ -74,9 +76,13 @@ class TransferEventConsumerTest {
     @DisplayName("It should consume TransferEvent successfully")
     void itShouldConsumeTransferEventSuccessfully() throws InterruptedException {
         // Given
-        AccountService accountService = mock(AccountService.class);
-        when(accountService.updateAccountBalance(anyString(), any(BigDecimal.class)))
-                .thenReturn(AccountDto.builder().build());
+        AccountBalanceService accountService = mock(AccountBalanceService.class);
+        UpdateAccountBalanceDto updateAccountBalanceDto = UpdateAccountBalanceDto.builder()
+                .updateByValue(any(BigDecimal.class))
+                .currencyType(CurrencyType.PLN.name())
+                .build();
+        when(accountService.updateAccountBalance(anyString(), updateAccountBalanceDto))
+                .thenReturn(AccountBalanceDto.builder().build());
         kafkaTemplate.send(CREATE_TRANSFER_EVENT, transferEvent);
 
         // When
@@ -92,14 +98,13 @@ class TransferEventConsumerTest {
     @DisplayName("It should failure with consume TransferEvent")
     void itShouldFailureWithConsumeTransferEvent() throws InterruptedException {
         // Given
-        when(accountService.updateAccountBalance(anyString(), any(BigDecimal.class)))
+        when(accountBalanceService.updateAccountBalance(anyString(), any(UpdateAccountBalanceDto.class)))
                 .thenThrow(new AccountNotExistsException("Account with id: %s not exists"));
         kafkaTemplate.send(CREATE_TRANSFER_EVENT, transferEvent);
 
         // When
         CountDownLatch latch = new CountDownLatch(1);
-        latch.await(500, TimeUnit.MILLISECONDS);
-
+        latch.await(100, TimeUnit.MILLISECONDS);
         // Then
         verify(transferEventConsumer, times(1))
                 .onMessage(isA(ConsumerRecord.class));

@@ -7,7 +7,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -20,7 +19,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-import pl.dk.accounts_service.account.dtos.UpdateAccountBalance;
+import pl.dk.accounts_service.enums.CurrencyType;
+import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
+import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
 import pl.dk.accounts_service.error.RestControllerHandler;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
 import pl.dk.accounts_service.httpClient.dtos.UserDto;
@@ -63,7 +64,6 @@ class AccountIntegrationTest {
                 .build();
         createAccountDto = CreateAccountDto.builder()
                 .accountType("CREDIT")
-                .balance(BigDecimal.valueOf(1000))
                 .userId(userId)
                 .build();
     }
@@ -77,7 +77,11 @@ class AccountIntegrationTest {
 
         // When
         HttpEntity<CreateAccountDto> createAccounttHttpEntity = new HttpEntity<>(createAccountDto);
-        ResponseEntity<AccountDto> postResponse = testRestTemplate.exchange("/accounts", HttpMethod.POST, createAccounttHttpEntity, AccountDto.class);
+        ResponseEntity<AccountDto> postResponse = testRestTemplate.exchange(
+                "/accounts",
+                HttpMethod.POST,
+                createAccounttHttpEntity,
+                AccountDto.class);
 
         // Then
         AccountDto accountDtoPOST = postResponse.getBody();
@@ -85,7 +89,6 @@ class AccountIntegrationTest {
             assertEquals(HttpStatus.CREATED, postResponse.getStatusCode());
             assertNotNull(accountDtoPOST);
             assertEquals(createAccountDto.accountType(), accountDtoPOST.accountType());
-            assertEquals(createAccountDto.balance(), accountDtoPOST.balance());
             assertEquals(createAccountDto.userId(), accountDtoPOST.userId());
             assertEquals(true, accountDtoPOST.active());
         });
@@ -95,7 +98,12 @@ class AccountIntegrationTest {
         String postAccountNumber = accountDtoPOST.accountNumber();
 
         // When
-        ResponseEntity<AccountDto> getResponse = testRestTemplate.exchange("/accounts/{accountNumber}", HttpMethod.GET, null, AccountDto.class, postAccountNumber);
+        ResponseEntity<AccountDto> getResponse = testRestTemplate.exchange(
+                "/accounts/{accountNumber}",
+                HttpMethod.GET,
+                null,
+                AccountDto.class,
+                postAccountNumber);
 
         // Then
         AccountDto accountDtoGET = getResponse.getBody();
@@ -103,7 +111,6 @@ class AccountIntegrationTest {
             assertEquals(HttpStatus.OK, getResponse.getStatusCode());
             assertNotNull(accountDtoGET);
             assertEquals(accountDtoPOST.accountType(), accountDtoGET.accountType());
-            assertEquals(accountDtoPOST.balance(), accountDtoGET.balance());
             assertEquals(accountDtoPOST.userId(), accountDtoGET.userId());
             assertEquals(accountDtoPOST.active(), accountDtoGET.active());
         });
@@ -111,28 +118,36 @@ class AccountIntegrationTest {
         // 3. User tries to update bank account balance: Expected status: 200 OK
         // Given
         BigDecimal updateByValue = BigDecimal.valueOf(1);
-        UpdateAccountBalance updateAccountBalance = UpdateAccountBalance.builder()
-                .updateByValue(updateByValue).build();
-        HttpEntity<UpdateAccountBalance> updateAccounttHttpEntity = new HttpEntity<>(updateAccountBalance);
+        UpdateAccountBalanceDto updateAccountBalance = UpdateAccountBalanceDto.builder()
+                .currencyType(CurrencyType.PLN.name())
+                .updateByValue(updateByValue)
+                .build();
+        HttpEntity<UpdateAccountBalanceDto> updateAccounttHttpEntity = new HttpEntity<>(updateAccountBalance);
 
         // When
-        ResponseEntity<AccountDto> patchResponse = testRestTemplate.exchange("/accounts/{accountNumber}", HttpMethod.PATCH, updateAccounttHttpEntity, AccountDto.class, postAccountNumber);
+        ResponseEntity<AccountBalanceDto> patchResponse = testRestTemplate.exchange(
+                "/accounts/{accountNumber}",
+                HttpMethod.PATCH,
+                updateAccounttHttpEntity,
+                AccountBalanceDto.class,
+                postAccountNumber);
 
         // Then
-        AccountDto accountDtoPATCH = patchResponse.getBody();
+        AccountBalanceDto accountBalanceDto = patchResponse.getBody();
 
         assertAll((() -> {
             assertEquals(HttpStatus.OK, patchResponse.getStatusCode());
-            assertNotNull(accountDtoPATCH);
-            assertNotEquals(accountDtoGET.balance(), accountDtoPATCH.balance());
-            assertEquals(accountDtoGET.accountType(), accountDtoPATCH.accountType());
-            assertEquals(accountDtoGET.userId(), accountDtoPATCH.userId());
-            assertEquals(accountDtoGET.active(), accountDtoPATCH.active());
+            assertNotNull(accountBalanceDto);
         }));
 
         // 4. User wants to delete account: Expected status: 204 NO_CONTENT
         // Given When
-        ResponseEntity<AccountDto> deleteResponse = testRestTemplate.exchange("/accounts/{accountNumber}", HttpMethod.DELETE, null, AccountDto.class, postAccountNumber);
+        ResponseEntity<AccountDto> deleteResponse = testRestTemplate.exchange(
+                "/accounts/{accountNumber}",
+                HttpMethod.DELETE,
+                null,
+                AccountDto.class,
+                postAccountNumber);
 
         // Then
         AccountDto accountDtoDELETE = deleteResponse.getBody();
@@ -144,14 +159,19 @@ class AccountIntegrationTest {
 
         // 5. User wants to update account balance but account does not exist: Expected status: 404 NOT_FOUND
         // Given When
-        ResponseEntity<AccountDto> patch404Response = testRestTemplate.exchange("/accounts/{accountNumber}", HttpMethod.PATCH, updateAccounttHttpEntity, AccountDto.class, postAccountNumber);
+        ResponseEntity<AccountDto> patch404Response = testRestTemplate.exchange(
+                "/accounts/{accountNumber}",
+                HttpMethod.PATCH,
+                updateAccounttHttpEntity,
+                AccountDto.class,
+                postAccountNumber);
 
         // Then
         assertAll(() -> {
             assertEquals(HttpStatus.NOT_FOUND, patch404Response.getStatusCode());
         });
 
-        // 6. User tries to get all his accounts
+        // 6. User tries to get all his accounts. Expected status code: 200 OK
         // Given When
         ResponseEntity<List<AccountDto>> allAccountsResponse = testRestTemplate.exchange("/accounts/{userId}/all",
                 HttpMethod.GET,
@@ -165,6 +185,20 @@ class AccountIntegrationTest {
             assertEquals(HttpStatus.OK, allAccountsResponse.getStatusCode());
             assertEquals(1, allAccountsResponse.getBody().size());
         });
+
+        // 7. User tires to get balance for PLN currency. Expected status code: 200 OK
+        // Given When
+        ResponseEntity<AccountBalanceDto> getAccountBalancePLN = testRestTemplate.getForEntity(
+                "/accounts/{accountNumber}/balance?currencyType={currencyType}",
+                AccountBalanceDto.class,
+                postAccountNumber, CurrencyType.PLN.name());
+
+        // Then
+        assertAll(
+                () -> {
+                    assertEquals(HttpStatus.OK, getAccountBalancePLN.getStatusCode());
+                }
+        );
 
     }
 
@@ -195,7 +229,7 @@ class AccountIntegrationTest {
         List<RestControllerHandler.MethodArgumentNotValidExceptionWrapper> body = postResponse.getBody();
         assertAll(() -> {
             assertNotNull(body);
-            assertEquals(3, postResponse.getBody().size());
+            assertEquals(2, postResponse.getBody().size());
         });
 
     }
