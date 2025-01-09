@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -15,11 +14,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
-import pl.dk.transfer_service.constants.TransferServiceConstants;
+import pl.dk.transfer_service.enums.CurrencyType;
+import pl.dk.transfer_service.enums.TransferStatus;
 import pl.dk.transfer_service.exception.InsufficientBalanceException;
 import pl.dk.transfer_service.exception.TransferNotFoundException;
 import pl.dk.transfer_service.exception.TransferStatusException;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
+import pl.dk.transfer_service.httpClient.dtos.AccountBalanceDto;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
@@ -36,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static pl.dk.transfer_service.constants.TransferServiceConstants.*;
-import static pl.dk.transfer_service.transfer.TransferStatus.*;
+import static pl.dk.transfer_service.enums.TransferStatus.*;
 
 class TransferServiceTest {
 
@@ -85,7 +86,6 @@ class TransferServiceTest {
 
         sender = AccountDto.builder()
                 .accountNumber(senderAccountNumber)
-                .balance(senderBalance)
                 .userId(senderUserId)
                 .active(senderActiveStatus)
                 .build();
@@ -121,15 +121,47 @@ class TransferServiceTest {
         autoCloseable.close();
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(CurrencyType.class)
     @DisplayName("It should create transfer successfully")
-    void itShouldCreateTransferSuccessfully() {
+    void itShouldCreateTransferSuccessfully(CurrencyType currencyType) {
         // Given
+        Transfer transfer = Transfer.builder()
+                .id("123e4567-e89b-12d3-a456-426614174000")
+                .senderAccountNumber(senderAccountNumber)
+                .recipientAccountNumber(recipientAccountNumber)
+                .amount(amount)
+                .currencyType(currencyType)
+                .transferDate(transferDate)
+                .transferStatus(PENDING)
+                .description(description)
+                .balanceAfterTransfer(balanceAfterTransfer)
+                .build();
+
         Mockito.when(accountFeignClient.getAccountById(senderAccountNumber))
                 .thenReturn(ResponseEntity.of(Optional.of(sender)));
         Mockito.when(accountFeignClient.getAccountById(recipientAccountNumber))
                 .thenReturn(ResponseEntity.of(Optional.of(recipient)));
-        Mockito.when(transferRepository.save(any(Transfer.class))).thenReturn(transfer);
+        Mockito.when(transferRepository.save(any(Transfer.class)))
+                .thenReturn(transfer);
+
+        Mockito.when(accountFeignClient.getAccountBalanceByAccountNumberAndCurrencyType(
+                        senderAccountNumber,
+                        currencyType.name()))
+                .thenReturn(ResponseEntity.ok(
+                        AccountBalanceDto.builder()
+                                .balance(senderBalance)
+                                .currencyType(currencyType)
+                                .build()));
+
+        CreateTransferDto createTransferDto = CreateTransferDto.builder()
+                .senderAccountNumber(senderAccountNumber)
+                .recipientAccountNumber(recipientAccountNumber)
+                .amount(amount)
+                .currencyType(currencyType.name())
+                .transferDate(transferDate)
+                .description("Monthly rent payment")
+                .build();
 
         // When
         TransferDto result = underTest.createTransfer(createTransferDto);
@@ -148,7 +180,7 @@ class TransferServiceTest {
                     assertTrue(result.recipientAccountNumber().contains(privacy),
                             "The sender account number should be masked for privacy.");
                     assertEquals(amount, result.amount());
-                    assertEquals(CurrencyType.PLN.toString(), result.currencyType());
+                    assertEquals(currencyType.name(), result.currencyType());
                     assertEquals(transferDate, result.transferDate());
                     assertEquals(PENDING.name(), result.transferStatus());
                     assertEquals(description, result.description());
@@ -157,18 +189,48 @@ class TransferServiceTest {
         );
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(CurrencyType.class)
     @DisplayName("It should throw InsufficientBalanceException when send doesn't have enough funds ")
-    void itShouldThrowInsufficientBalanceException() {
+    void itShouldThrowInsufficientBalanceException(CurrencyType currencyType) {
         // Given
         AccountDto mockSender = AccountDto.builder()
-                .balance(BigDecimal.ZERO)
                 .build();
         Mockito.when(accountFeignClient.getAccountById(senderAccountNumber))
                 .thenReturn(ResponseEntity.of(Optional.of(mockSender)));
         Mockito.when(accountFeignClient.getAccountById(recipientAccountNumber))
                 .thenReturn(ResponseEntity.of(Optional.of(recipient)));
+
+        Transfer transfer = Transfer.builder()
+                .id("123e4567-e89b-12d3-a456-426614174000")
+                .senderAccountNumber(senderAccountNumber)
+                .recipientAccountNumber(recipientAccountNumber)
+                .amount(amount)
+                .currencyType(currencyType)
+                .transferDate(transferDate)
+                .transferStatus(PENDING)
+                .description(description)
+                .balanceAfterTransfer(balanceAfterTransfer)
+                .build();
         Mockito.when(transferRepository.save(any(Transfer.class))).thenReturn(transfer);
+
+        Mockito.when(accountFeignClient.getAccountBalanceByAccountNumberAndCurrencyType(
+                        senderAccountNumber,
+                        currencyType.name()))
+                .thenReturn(ResponseEntity.ok(
+                        AccountBalanceDto.builder()
+                                .balance(BigDecimal.ZERO)
+                                .currencyType(currencyType)
+                                .build()));
+
+        CreateTransferDto createTransferDto = CreateTransferDto.builder()
+                .senderAccountNumber(senderAccountNumber)
+                .recipientAccountNumber(recipientAccountNumber)
+                .amount(amount)
+                .currencyType(currencyType.name())
+                .transferDate(transferDate)
+                .description("Monthly rent payment")
+                .build();
 
         // When
         assertThrows(InsufficientBalanceException.class, () -> underTest.createTransfer(createTransferDto));
@@ -405,4 +467,5 @@ class TransferServiceTest {
         });
 
     }
+
 }

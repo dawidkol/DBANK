@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import pl.dk.transfer_service.enums.CurrencyType;
+import pl.dk.transfer_service.enums.TransferStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
