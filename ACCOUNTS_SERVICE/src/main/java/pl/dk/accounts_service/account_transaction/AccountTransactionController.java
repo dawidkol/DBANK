@@ -23,5 +23,4 @@ class AccountTransactionController {
         BigDecimal average = accountTransactionService.getAverageBalanceFromDeclaredMonths(userId, 12);
         return ResponseEntity.ok(average);
     }
-
 }

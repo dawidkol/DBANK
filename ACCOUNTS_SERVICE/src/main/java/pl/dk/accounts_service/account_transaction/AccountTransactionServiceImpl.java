@@ -40,17 +40,24 @@ class AccountTransactionServiceImpl implements AccountTransactionService {
     public void onTransactionEvent(AccountEventPublisher event) {
         CurrencyType currencyType = event.currencyType();
         log.info("Starting saving account transaction for accountId: {}", event.accountId());
-        AccountBalance accountBalance = accountBalanceRepository.findFirstByAccount_AccountNumberAndCurrencyType(event.accountId(), currencyType)
+        AccountBalance accountBalance = accountBalanceRepository.findFirstByAccount_AccountNumberAndCurrencyType(
+                        event.accountId(),
+                        currencyType)
                 .orElseThrow(() ->
                         new AccountNotExistsException("Account with id: %s not exists".formatted(event.accountId())));
         BigDecimal balance = accountBalance.getBalance();
         BigDecimal amount = event.updatedByValue();
-        AccountTransaction accountTransactionToSave = buildAccountTransactionObject(currencyType, accountBalance.getAccount(), amount, balance);
+        AccountTransaction accountTransactionToSave = buildAccountTransactionObject(
+                currencyType,
+                accountBalance.getAccount(),
+                amount,
+                balance);
         AccountTransaction savedTransaction = accountTransactionRepository.save(accountTransactionToSave);
         log.info("Account transaction for accountId: {}, saved with id: {}", event.accountId(), savedTransaction.getId());
     }
 
-    private AccountTransaction buildAccountTransactionObject(CurrencyType currencyType, Account account, BigDecimal amount, BigDecimal balance) {
+    private AccountTransaction buildAccountTransactionObject(CurrencyType currencyType, Account account,
+                                                             BigDecimal amount, BigDecimal balance) {
         return AccountTransaction.builder()
                 .transactionDate(account.getCreatedAt())
                 .currencyType(currencyType)
@@ -84,7 +91,8 @@ class AccountTransactionServiceImpl implements AccountTransactionService {
                     return entry.getValue()
                             .stream()
                             .map(AccountTransactionCalculationDto::amount)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add).divide(BigDecimal.valueOf(entry.getValue().size()));
+                            .reduce(BigDecimal.ZERO,
+                                    BigDecimal::add).divide(BigDecimal.valueOf(entry.getValue().size()));
                 })).values()
                 .stream()
                 .mapToDouble(BigDecimal::doubleValue)

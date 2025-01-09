@@ -29,8 +29,9 @@ class AccountBalanceServiceImpl implements AccountBalanceService {
     @Override
     @Transactional
     public AccountBalanceDto updateAccountBalance(String accountNumber, UpdateAccountBalanceDto updateAccountBalanceDto) {
-        Account account = accountRepository.findById(accountNumber).orElseThrow(() ->
-                new AccountNotExistsException("Account with accountNumber: %s not exists".formatted(accountNumber)));
+        Account account = accountRepository.findById(accountNumber)
+                .orElseThrow(() ->
+                        new AccountNotExistsException("Account with accountNumber: %s not exists".formatted(accountNumber)));
         isAccountActive(account);
 
         CurrencyType currencyType = CurrencyType.valueOf(updateAccountBalanceDto.currencyType().toUpperCase());

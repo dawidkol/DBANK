@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
-import pl.dk.accounts_service.account_balance.AccountBalance;
 import pl.dk.accounts_service.account_balance.AccountBalanceService;
 import pl.dk.accounts_service.account_balance.dtos.AccountBalanceDto;
 import pl.dk.accounts_service.account_balance.dtos.UpdateAccountBalanceDto;
