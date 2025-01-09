@@ -1,6 +1,5 @@
 package pl.dk.transfer_service.transfer;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -10,14 +9,15 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
-import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.dk.transfer_service.enums.TransferStatus;
 import pl.dk.transfer_service.exception.AccountNotExistsException;
 import pl.dk.transfer_service.exception.InsufficientBalanceException;
 import pl.dk.transfer_service.exception.TransferNotFoundException;
 import pl.dk.transfer_service.exception.TransferStatusException;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
+import pl.dk.transfer_service.httpClient.dtos.AccountBalanceDto;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferEvent;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static pl.dk.transfer_service.kafka.KafkaConstants.CREATE_TRANSFER_EVENT;
-import static pl.dk.transfer_service.transfer.TransferStatus.*;
+import static pl.dk.transfer_service.enums.TransferStatus.*;
 
 @Slf4j
 @Service
@@ -53,8 +53,8 @@ class TransferServiceImpl implements TransferService {
     @Override
     @Transactional
     public TransferDto createTransfer(CreateTransferDto createTransferDto) {
-        AccountDto senderAccountDto = validateRequest(createTransferDto);
-        Transfer transferToSave = setTransferObjectToSave(createTransferDto, senderAccountDto);
+        AccountBalanceDto accountBalanceDto = validateRequest(createTransferDto);
+        Transfer transferToSave = setTransferObjectToSave(createTransferDto, accountBalanceDto);
         Transfer savedTransfer = transferRepository.save(transferToSave);
         if (savedTransfer.getTransferStatus().equals(PENDING)) {
             createEventAndSendToKafka(savedTransfer);
@@ -69,7 +69,7 @@ class TransferServiceImpl implements TransferService {
                 transferEvent);
     }
 
-    private static Transfer setTransferObjectToSave(CreateTransferDto createTransferDto, AccountDto senderAccountDto) {
+    private static Transfer setTransferObjectToSave(CreateTransferDto createTransferDto, AccountBalanceDto accountBalanceDto) {
         Transfer transferToSave = TransferDtoMapper.map(createTransferDto);
         LocalDate now = LocalDate.now();
         LocalDate transferLocalDate = createTransferDto.transferDate().toLocalDate();
@@ -78,23 +78,28 @@ class TransferServiceImpl implements TransferService {
         } else if (transferLocalDate.isAfter(now)) {
             transferToSave.setTransferStatus(SCHEDULED);
         }
-        transferToSave.setBalanceAfterTransfer(senderAccountDto.balance().subtract(createTransferDto.amount()));
+        transferToSave.setBalanceAfterTransfer(accountBalanceDto.balance().subtract(createTransferDto.amount()));
         return transferToSave;
     }
 
-    private AccountDto validateRequest(CreateTransferDto createTransferDto) {
+    private AccountBalanceDto validateRequest(CreateTransferDto createTransferDto) {
         ResponseEntity<AccountDto> sender = accountFeignClient.getAccountById(createTransferDto.senderAccountNumber());
         ResponseEntity<AccountDto> recipient = accountFeignClient.getAccountById(createTransferDto.recipientAccountNumber());
         if (sender.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND) || recipient.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND)) {
             throw new AccountNotExistsException("Account with id: %s not exists");
         }
-        AccountDto senderAccountDto = sender.getBody();
-        assert senderAccountDto != null;
-        int i = senderAccountDto.balance().compareTo(createTransferDto.amount());
+        ResponseEntity<AccountBalanceDto> accountBalanceResponse = accountFeignClient.getAccountBalanceByAccountNumberAndCurrencyType(
+                createTransferDto.senderAccountNumber(),
+                createTransferDto.currencyType());
+        if (accountBalanceResponse.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND)) {
+            throw new AccountNotExistsException("Account with id: %s not exists");
+        }
+        AccountBalanceDto accountBalanceDto = accountBalanceResponse.getBody();
+        int i = Objects.requireNonNull(accountBalanceDto).balance().compareTo(createTransferDto.amount());
         if (i < 0) {
             throw new InsufficientBalanceException("Insufficient sender account balance");
         }
-        return senderAccountDto;
+        return accountBalanceDto;
     }
 
     @Override

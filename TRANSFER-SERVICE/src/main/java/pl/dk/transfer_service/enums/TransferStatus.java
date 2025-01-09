@@ -1,4 +1,4 @@
-package pl.dk.transfer_service.transfer;
+package pl.dk.transfer_service.enums;
 
 public enum TransferStatus {
     PENDING,

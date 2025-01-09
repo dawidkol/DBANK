@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
@@ -23,15 +20,16 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
+import pl.dk.transfer_service.enums.CurrencyType;
+import pl.dk.transfer_service.enums.TransferStatus;
 import pl.dk.transfer_service.httpClient.AccountFeignClient;
+import pl.dk.transfer_service.httpClient.dtos.AccountBalanceDto;
 import pl.dk.transfer_service.httpClient.dtos.AccountDto;
 import pl.dk.transfer_service.kafka.KafkaConstants;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
 import java.math.BigDecimal;
-import java.net.URI;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +81,6 @@ class TransferControllerTest {
         senderDto = AccountDto.builder()
                 .accountNumber(senderAccount)
                 .accountType(accountType)
-                .balance(BigDecimal.valueOf(100000))
                 .userId("979e0762-0536-480b-890d-843715dd3be6")
                 .active(true)
                 .build();
@@ -91,7 +88,6 @@ class TransferControllerTest {
         recipientDto = AccountDto.builder()
                 .accountNumber(recipientAccount)
                 .accountType(accountType)
-                .balance(BigDecimal.ZERO)
                 .userId("eb285c17-54a2-45df-9271-a0e161e9db1d")
                 .active(true)
                 .build();
@@ -121,6 +117,13 @@ class TransferControllerTest {
         Mockito.when(accountFeignClient.getAccountById(recipientAccount))
                 .thenReturn(ResponseEntity.of(Optional.empty()))
                 .thenReturn(ResponseEntity.of(Optional.of(recipientDto)));
+        Mockito.when(accountFeignClient.getAccountBalanceByAccountNumberAndCurrencyType(
+                senderAccount,
+                        CurrencyType.PLN.name()))
+                .thenReturn(ResponseEntity.ok(AccountBalanceDto.builder()
+                        .balance(createTransferDto.amount().add(BigDecimal.ONE))
+                        .currencyType(CurrencyType.PLN)
+                        .build()));
 
         // When
         ResponseEntity<Object> transferDtoResponseEntity404 = testRestTemplate.exchange(
@@ -132,7 +135,8 @@ class TransferControllerTest {
 
         // Then
         assertAll(() -> {
-                    Mockito.verify(accountFeignClient, Mockito.times(2)).getAccountById(Mockito.any(String.class));
+                    Mockito.verify(accountFeignClient, Mockito.times(2))
+                            .getAccountById(Mockito.any(String.class));
                     assertTrue(transferDtoResponseEntity404.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND));
                 }
         );
@@ -147,8 +151,9 @@ class TransferControllerTest {
         // Then
         ConsumerRecords<String, AccountDto> records = KafkaTestUtils.getRecords(consumer);
         assertAll(() -> {
-                    Mockito.verify(accountFeignClient, Mockito.times(4)).getAccountById(Mockito.any(String.class));
-                    assertTrue(transferDtoResponseEntity.getStatusCode().isSameCodeAs(HttpStatus.CREATED));
+                    Mockito.verify(accountFeignClient, Mockito.times(2))
+                            .getAccountById(senderAccount);
+            assertTrue(transferDtoResponseEntity.getStatusCode().isSameCodeAs(HttpStatus.CREATED));
                     assertEquals(1, records.count());
                 }
         );

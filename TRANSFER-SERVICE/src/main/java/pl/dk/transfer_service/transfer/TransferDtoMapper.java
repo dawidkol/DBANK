@@ -1,5 +1,6 @@
 package pl.dk.transfer_service.transfer;
 
+import pl.dk.transfer_service.enums.CurrencyType;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferEvent;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
@@ -7,7 +8,7 @@ import pl.dk.transfer_service.transfer.dtos.TransferDto;
 class TransferDtoMapper {
 
     public static Transfer map(CreateTransferDto createTransferDto) {
-        String currency = createTransferDto.currencyType();
+        String currency = createTransferDto.currencyType().toUpperCase();
         CurrencyType currencyType = CurrencyType.valueOf(currency);
         return Transfer.builder()
                 .senderAccountNumber(createTransferDto.senderAccountNumber())

@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 public record AccountDto(
         String accountNumber,
         String accountType,
-        BigDecimal balance,
         String userId,
         Boolean active
 ) {

@@ -16,7 +16,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import pl.dk.transfer_service.kafka.consumer.dtos.ResponseTransferEvent;
-import pl.dk.transfer_service.transfer.TransferStatus;
+import pl.dk.transfer_service.enums.TransferStatus;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
