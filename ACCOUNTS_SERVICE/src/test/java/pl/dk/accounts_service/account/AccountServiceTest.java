@@ -14,8 +14,7 @@ import org.springframework.http.ResponseEntity;
 import pl.dk.accounts_service.account.dtos.AccountDto;
 import pl.dk.accounts_service.account.dtos.CreateAccountDto;
 import pl.dk.accounts_service.constants.PagingAndSorting;
-import pl.dk.accounts_service.exception.AccountBalanceException;
-import pl.dk.accounts_service.exception.AccountInactiveException;
+import pl.dk.accounts_service.enums.AccountType;
 import pl.dk.accounts_service.exception.AccountNotExistsException;
 import pl.dk.accounts_service.exception.UserNotFoundException;
 import pl.dk.accounts_service.httpClient.UserFeignClient;
@@ -39,8 +38,6 @@ class AccountServiceTest {
     private AccountRepository accountRepository;
     @Mock
     private AccountNumberGenerator accountNumberGenerator;
-    @Mock
-    private ApplicationEventPublisher applicationEventPublisher;
     private AutoCloseable autoCloseable;
     private AccountService underTest;
 
@@ -54,7 +51,7 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
-        underTest = new AccountServiceImpl(accountRepository, accountNumberGenerator, userFeignClient, applicationEventPublisher);
+        underTest = new AccountServiceImpl(accountRepository, accountNumberGenerator, userFeignClient);
 
         userId = "63d520d6-df76-4ed7-a8a6-2f597248cfb1";
         accountNumber = "123456789012345678901234";
@@ -64,7 +61,6 @@ class AccountServiceTest {
         account = Account.builder()
                 .accountNumber(accountNumber)
                 .accountType(AccountType.CREDIT)
-                .balance(balance)
                 .userId(userId)
                 .active(active)
                 .build();
@@ -81,7 +77,6 @@ class AccountServiceTest {
         // Given
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
                 .accountType("CREDIT")
-                .balance(balance)
                 .userId(userId)
                 .build();
 
@@ -110,7 +105,6 @@ class AccountServiceTest {
                 () -> assertThat(accountDto.accountNumber()).isEqualTo(accountNumber),
                 () -> assertThat(accountDto.accountType()).isEqualTo(AccountType.CREDIT.toString()),
                 () -> assertThat(accountDto.accountNumber()).isEqualTo(accountNumber),
-                () -> assertThat(accountDto.balance()).isEqualTo(balance),
                 () -> assertThat(accountDto.userId()).isEqualTo(userId),
                 () -> assertThat(accountDto.active()).isEqualTo(active)
         );
@@ -123,7 +117,6 @@ class AccountServiceTest {
         BigDecimal balance = BigDecimal.valueOf(10000L);
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
                 .accountType("CREDIT")
-                .balance(balance)
                 .userId(userId)
                 .build();
         Mockito.when(userFeignClient.getUserById(any(String.class))).thenReturn(ResponseEntity.notFound().build());
@@ -149,7 +142,6 @@ class AccountServiceTest {
         assertAll(
                 () -> assertThat(result.userId()).isEqualTo(userId),
                 () -> assertThat(result.accountNumber()).isEqualTo(accountNumber),
-                () -> assertThat(result.balance()).isEqualTo(balance),
                 () -> assertThat(result.accountType()).isEqualTo(account.getAccountType().toString()),
                 () -> assertThat(result.userId()).isEqualTo(userId),
                 () -> assertThat(result.active()).isEqualTo(active)
@@ -195,47 +187,6 @@ class AccountServiceTest {
         assertThrows(AccountNotExistsException.class, () -> underTest.deleteAccountById(accountNumber));
 
         // Then
-        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
-    }
-
-    @Test
-    @DisplayName("It should update account balance successfully")
-    void itShouldUpdateAccountBalanceSuccessfully() {
-        // Given
-        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
-        BigDecimal updateByValue = BigDecimal.valueOf(1000);
-
-        // When
-        AccountDto result = underTest.updateAccountBalance(accountNumber, updateByValue);
-
-        // Then
-        assertThat(result.balance()).isEqualTo(balance.add(updateByValue));
-    }
-
-    @Test
-    @DisplayName("It should throw AccountInactiveException when account is inactive")
-    void itShouldThrowAccountInactiveExceptionWhenAccountIsInactive() {
-        // Given
-        account.setActive(false);
-        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
-        BigDecimal updateByValue = BigDecimal.valueOf(1000);
-
-        // When Then
-        assertThrows(AccountInactiveException.class,
-                () -> underTest.updateAccountBalance(accountNumber, updateByValue));
-        Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
-    }
-
-    @Test
-    @DisplayName("It should throw AccountBalanceException when amount is greater that current account balance")
-    void itShouldThrowAccountBalanceExceptionWhenAmountIsGreaterThanCurrentAccountBalance() {
-        // Given
-        Mockito.when(accountRepository.findById(accountNumber)).thenReturn(Optional.of(account));
-        BigDecimal updateByValue = BigDecimal.valueOf(-1000000);
-
-        // When
-        assertThrows(AccountBalanceException.class,
-                () -> underTest.updateAccountBalance(accountNumber, updateByValue));
         Mockito.verify(accountRepository, Mockito.times(1)).findById(accountNumber);
     }
 
