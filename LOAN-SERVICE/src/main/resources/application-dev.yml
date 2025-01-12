@@ -28,6 +28,7 @@ spring:
       hibernate:
         highlight_sql: true
         format_sql: true
+        show_sql: true
       open-in-view: false
 
   flyway:
@@ -68,6 +69,8 @@ logging:
     pl:
       dk:
         loan-service: TRACE
+logging.level.org.hibernate.orm.jdbc.bind: TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 resilience4j:
   circuitbreaker:
