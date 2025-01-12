@@ -12,8 +12,7 @@ interface LoanScheduleService {
 
     void updatePaymentInstallmentStatus(UpdateSchedulePaymentEvent event);
 
-    void setPaymentStatusAsPaidLate();
-
     List<LoanScheduleDto> getLoanSchedule(String loan_id);
+
 
 }

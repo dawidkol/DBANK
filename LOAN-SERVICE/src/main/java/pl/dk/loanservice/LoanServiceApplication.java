@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.TimeZone;
+
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableFeignClients
@@ -15,6 +17,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class LoanServiceApplication {
 
 	public static void main(String[] args) {
+		TimeZone.setDefault(TimeZone.getTimeZone("Europe/Warsaw"));
 		SpringApplication.run(LoanServiceApplication.class, args);
 	}
 

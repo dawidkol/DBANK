@@ -2,6 +2,7 @@ package pl.dk.loanservice.loan_schedule;
 
 import jakarta.persistence.*;
 import lombok.*;
+import pl.dk.loanservice.enums.PaymentStatus;
 import pl.dk.loanservice.loan.BaseEntity;
 import pl.dk.loanservice.loan.Loan;
 
@@ -28,5 +29,6 @@ public class LoanSchedule extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "loan_id")
     private Loan loan;
+    private String transferId;
 
 }
