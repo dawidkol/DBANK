@@ -62,11 +62,10 @@ class LoanController {
         return ResponseEntity.ok(allUsersLoans);
     }
 
-    @PostMapping("/pay")
-    public ResponseEntity<TransferDto> payInstallment(@Valid @RequestBody CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
-        TransferDto transferDto = loanService.payInstallment(createLoanInstallmentTransfer);
+    @PostMapping("/{loanScheduleId}/pay")
+    public ResponseEntity<TransferDto> payInstallment(@PathVariable String loanScheduleId, @Valid @RequestBody CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
+        TransferDto transferDto = loanService.payInstallment(loanScheduleId, createLoanInstallmentTransfer);
         return ResponseEntity.status(HttpStatus.CREATED).body(transferDto);
     }
-
 
 }

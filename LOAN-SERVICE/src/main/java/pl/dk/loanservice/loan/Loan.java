@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.validator.constraints.UUID;
+import pl.dk.loanservice.enums.CurrencyType;
+import pl.dk.loanservice.enums.LoanStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -44,11 +46,13 @@ public class Loan extends BaseEntity {
     @NotBlank
     @Size(min = 10, max = 300)
     private String description;
+    @NotNull
+    @Enumerated(value = EnumType.STRING)
+    private CurrencyType currencyType;
 
     @Builder
-    public Loan(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String id,
-                String userId, BigDecimal amount, BigDecimal interestRate, LocalDate startDate, LocalDate endDate,
-                Integer numberOfInstallments, BigDecimal remainingAmount, LoanStatus status, String description) {
+
+    public Loan(LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy, String id, String userId, BigDecimal amount, BigDecimal interestRate, LocalDate startDate, LocalDate endDate, Integer numberOfInstallments, BigDecimal remainingAmount, LoanStatus status, String description, CurrencyType currencyType) {
         super(createdAt, createdBy, updatedAt, updatedBy);
         this.id = id;
         this.userId = userId;
@@ -60,5 +64,6 @@ public class Loan extends BaseEntity {
         this.remainingAmount = remainingAmount;
         this.status = status;
         this.description = description;
+        this.currencyType = currencyType;
     }
 }

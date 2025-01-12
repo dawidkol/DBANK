@@ -12,9 +12,6 @@ import java.math.BigDecimal;
 public record CreateLoanAccountDto(
         @AccountTypeEnum
         String accountType,
-        @PositiveOrZero
-        @NotNull
-        BigDecimal balance,
         @NotBlank
         String userId,
         @NotBlank

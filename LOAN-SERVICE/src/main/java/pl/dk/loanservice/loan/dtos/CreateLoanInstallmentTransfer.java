@@ -8,10 +8,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
-public record CreateLoanInstallmentTransfer(@NotNull
+public record CreateLoanInstallmentTransfer(/*@NotNull
                                             @NotBlank
                                             @UUID
-                                            String loanId,
+                                            String loanId,*/
                                             @NotNull
                                             @Pattern(regexp = "\\d{26}")
                                             String senderAccountNumber,

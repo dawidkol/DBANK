@@ -1,10 +1,6 @@
 package pl.dk.loanservice.loan.dtos;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.Builder;
-import org.hibernate.validator.constraints.UUID;
-import pl.dk.loanservice.loan.LoanStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,6 +15,7 @@ public record LoanDto(
         LocalDate endDate,
         BigDecimal remainingAmount,
         String status,
-        String description
+        String description,
+        String currencyType
 ) {
 }
