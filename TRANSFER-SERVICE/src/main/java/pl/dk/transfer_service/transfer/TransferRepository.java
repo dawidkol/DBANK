@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-interface TransferRepository extends JpaRepository<Transfer, String> {
+public interface TransferRepository extends JpaRepository<Transfer, String> {
 
     Page<Transfer> findAllBySenderAccountNumber(String senderAccountNumber, Pageable pageable);
 

@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-class Transfer extends BaseEntity {
+public class Transfer extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
