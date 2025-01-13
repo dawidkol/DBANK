@@ -2,7 +2,7 @@ package pl.dk.loanservice.error;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import pl.dk.loanservice.loan.AccountType;
+import pl.dk.loanservice.enums.AccountType;
 
 class AccountTypeValidator implements ConstraintValidator<AccountTypeEnum, String> {
 

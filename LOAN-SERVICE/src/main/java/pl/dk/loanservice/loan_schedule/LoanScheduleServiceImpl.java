@@ -3,10 +3,8 @@ package pl.dk.loanservice.loan_schedule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import pl.dk.loanservice.enums.PaymentStatus;
 import pl.dk.loanservice.exception.LoanDetailsNotExistsException;
 import pl.dk.loanservice.exception.LoanNotExistsException;
 import pl.dk.loanservice.loan.Loan;
@@ -20,10 +18,9 @@ import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
-import static pl.dk.loanservice.loan_schedule.PaymentStatus.*;
+import static pl.dk.loanservice.enums.PaymentStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -75,31 +72,27 @@ class LoanScheduleServiceImpl implements LoanScheduleService {
     @Override
     @ApplicationModuleListener
     public void updatePaymentInstallmentStatus(UpdateSchedulePaymentEvent event) {
-        loanScheduleRepository.findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                        event.loanId(),
-                        UNPAID,
-                        OVERDUE)
-                .stream()
-                .min(Comparator.comparing(LoanSchedule::getDeadline))
+        String loanScheduleId = event.loanScheduleId();
+        LocalDate transferLocalDate = event.transferDate().toLocalDate();
+        LocalDate now = LocalDate.now();
+        loanScheduleRepository.findById(loanScheduleId)
                 .ifPresentOrElse(loanSchedule -> {
-                    if (loanSchedule.getPaymentStatus().equals(OVERDUE)) {
-                        loanSchedule.setPaymentStatus(PAID_LATE);
-                    } else if (loanSchedule.getPaymentStatus().equals(UNPAID)) {
-                        loanSchedule.setPaymentStatus(PAID_ON_TIME);
+                    if (now.isEqual(transferLocalDate) || now.isAfter(transferLocalDate)) {
+                        setLoanSchedulePaymentStatusAndTransferId(event, loanSchedule, PENDING);
+                    } else if (now.isBefore(transferLocalDate)) {
+                        setLoanSchedulePaymentStatusAndTransferId(event, loanSchedule, SCHEDULED);
                     }
                 }, () -> {
                     log.info("LoanSchedule: Nothing to update");
                 });
     }
 
-    @Override
-    @Async
-    @Scheduled(cron = "${scheduler.payment-status}")
-    @Transactional
-    public void setPaymentStatusAsPaidLate() {
-        log.info("Starting updating LoanSchedule records");
-        int updatedRows = loanScheduleRepository.setPaymentStatusFromUnpaidTo(OVERDUE);
-        log.info("Updated LoanSchedule rows {}", updatedRows);
+    private static void setLoanSchedulePaymentStatusAndTransferId(UpdateSchedulePaymentEvent event,
+                                                                  LoanSchedule loanSchedule,
+                                                                  PaymentStatus paymentStatus) {
+        loanSchedule.setPaymentStatus(paymentStatus);
+        loanSchedule.setTransferId(event.transferId());
+        loanSchedule.setPaymentDate(event.transferDate().toLocalDate());
     }
 
     @Override

@@ -15,4 +15,7 @@ eureka:
       defaultZone: http://localhost:8000/eureka
 
 scheduler:
-  payment-status: 0 1 0 * * ?
+  payment-status:
+    overdue: 0 0/15 0-1 * * *
+    pending: 0 0/15 2-3 * * *
+    loan-payment: 0 0/15 4-5,22-23 * * *

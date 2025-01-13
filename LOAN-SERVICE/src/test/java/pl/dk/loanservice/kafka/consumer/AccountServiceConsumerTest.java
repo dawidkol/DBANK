@@ -19,7 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import pl.dk.loanservice.kafka.consumer.dtos.CreatedLoanAccountEvent;
 import pl.dk.loanservice.loan.Loan;
 import pl.dk.loanservice.loan.LoanRepository;
-import pl.dk.loanservice.loan.LoanStatus;
+import pl.dk.loanservice.enums.LoanStatus;
 import pl.dk.loanservice.loan.dtos.CreateLoanDto;
 
 import java.math.BigDecimal;

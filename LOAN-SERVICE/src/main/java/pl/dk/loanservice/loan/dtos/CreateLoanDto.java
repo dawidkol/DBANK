@@ -39,6 +39,9 @@ public record CreateLoanDto(
         BigDecimal avgExpenses,
         @NotNull
         @PositiveOrZero
-        BigDecimal existingLoanRepayments
+        BigDecimal existingLoanRepayments,
+        @NotNull
+        @NotBlank
+        String currencyType
 ) {
 }

@@ -9,6 +9,7 @@ CREATE TABLE loans
     end_date               DATE                    NOT NULL,
     number_of_installments INT                     NOT NULL,
     remaining_amount       DECIMAL(19, 2)          NOT NULL,
+    currency_type          VARCHAR(3)              NOT NULL,
     status                 VARCHAR(30)             NOT NULL,
     description            VARCHAR(300)            NOT NULL,
     created_at             TIMESTAMP,

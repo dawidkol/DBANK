@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import pl.dk.loanservice.credit.CreditScoreCalculator;
+import pl.dk.loanservice.enums.AccountType;
+import pl.dk.loanservice.enums.CurrencyType;
+import pl.dk.loanservice.enums.LoanStatus;
+import pl.dk.loanservice.enums.PaymentStatus;
 import pl.dk.loanservice.exception.*;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
 import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
@@ -21,6 +25,8 @@ import pl.dk.loanservice.httpClient.dtos.UserDto;
 import pl.dk.loanservice.loan.dtos.*;
 import pl.dk.loanservice.loan_details.LoanDetails;
 import pl.dk.loanservice.loan_details.LoanDetailsRepository;
+import pl.dk.loanservice.loan_schedule.LoanSchedule;
+import pl.dk.loanservice.loan_schedule.LoanScheduleRepository;
 import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 
 import java.math.BigDecimal;
@@ -44,6 +50,7 @@ class LoanServiceImpl implements LoanService {
     private final KafkaTemplate<String, CreateLoanAccountDto> kafkaTemplate;
     private final TransferServiceFeignClient transferServiceFeignClient;
     private final LoanDetailsRepository loanDetailsRepository;
+    private final LoanScheduleRepository loanScheduleRepository;
 
     @Override
     @Transactional
@@ -138,7 +145,6 @@ class LoanServiceImpl implements LoanService {
         return CreateLoanAccountDto.builder()
                 .userId(userId)
                 .accountType(AccountType.LOAN.name())
-                .balance(BigDecimal.ZERO)
                 .loanId(loanId)
                 .build();
     }
@@ -153,22 +159,37 @@ class LoanServiceImpl implements LoanService {
 
     @Override
     @Transactional(readOnly = true)
-    public TransferDto payInstallment(CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
-        String loanId = createLoanInstallmentTransfer.loanId();
-        LoanDetails loanDetails = loanDetailsRepository.findByLoan_id(loanId).orElseThrow(() ->
-                new LoanDetailsNotExistsException("Loan with id: %s not found".formatted(loanId)));
+    public TransferDto payInstallment(String loanScheduleId, CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
+        LoanSchedule loanSchedule = loanScheduleRepository.findById(loanScheduleId).orElseThrow(() ->
+                new LoanScheduleNotExistsException("LoanSchedule with id: %s not exists".formatted(loanScheduleId)));
 
-        Loan loan = loanRepository.findById(loanId).orElseThrow(() ->
-                new LoanNotExistsException("Loan with id: %s not found".formatted(loanId)));
+        Loan loan = loanSchedule.getLoan();
 
-        BigDecimal monthlyInstallment = calculateMonthlyInstallment(loan.getAmount(), loan.getInterestRate(), loan.getNumberOfInstallments());
-        CreateTransferDto createTransferDto = buildCreateTransferDtoObject(createLoanInstallmentTransfer, loanDetails, monthlyInstallment);
+        BigDecimal installment = loanSchedule.getInstallment();
+
+        CreateTransferDto createTransferDto = buildCreateTransferDtoObject(
+                createLoanInstallmentTransfer,
+                installment,
+                loan);
 
         ResponseEntity<TransferDto> transferDtoResponseEntity = transferServiceFeignClient.createTransfer(createTransferDto);
         HttpStatusCode responseStatusCode = transferDtoResponseEntity.getStatusCode();
-        if (responseStatusCode.isSameCodeAs(HttpStatus.CREATED)) {
-            applicationEventPublisher.publishEvent(new UpdateSchedulePaymentEvent(loanId));
+        if (validateTransferServiceResponse(responseStatusCode)) {
+            TransferDto body = transferDtoResponseEntity.getBody();
+            applicationEventPublisher.publishEvent(UpdateSchedulePaymentEvent.builder()
+                    .loanScheduleId(loanScheduleId)
+                    .transferId(body.transferId())
+                    .transferDate(body.transferDate())
+                    .build());
             return transferDtoResponseEntity.getBody();
+        }
+
+        throw new PayInstallmentException("Pay installment could not be processed, try again later");
+    }
+
+    private boolean validateTransferServiceResponse(HttpStatusCode responseStatusCode) {
+        if (responseStatusCode.isSameCodeAs(HttpStatus.CREATED)) {
+            return true;
         }
         if (responseStatusCode.isSameCodeAs(HttpStatus.BAD_REQUEST)) {
             throw new ResponseStatusException(responseStatusCode);
@@ -176,16 +197,20 @@ class LoanServiceImpl implements LoanService {
         if (responseStatusCode.is5xxServerError()) {
             throw new TransferServiceUnavailableException("Transfer Service unavailable");
         }
-
-        throw new PayInstallmentException("Pay installment could not be processed, try again later");
+        return false;
     }
 
-    private CreateTransferDto buildCreateTransferDtoObject(CreateLoanInstallmentTransfer createLoanInstallmentTransfer, LoanDetails loanDetails, BigDecimal monthlyInstallment) {
+    private CreateTransferDto buildCreateTransferDtoObject(CreateLoanInstallmentTransfer createLoanInstallmentTransfer,
+                                                           BigDecimal monthlyInstallment,
+                                                           Loan loan) {
+        String loanId = loan.getId();
+        LoanDetails loanDetails = loanDetailsRepository.findByLoan_id(loanId).orElseThrow(() ->
+                new LoanDetailsNotExistsException("Loan with id: %s not found".formatted(loanId)));
         return CreateTransferDto.builder()
                 .senderAccountNumber(createLoanInstallmentTransfer.senderAccountNumber())
                 .recipientAccountNumber(loanDetails.getLoanAccountNumber())
                 .amount(monthlyInstallment)
-                .currencyType("PLN")
+                .currencyType(loan.getCurrencyType().name())
                 .transferDate(createLoanInstallmentTransfer.transferDate())
                 .description(createLoanInstallmentTransfer.description())
                 .build();

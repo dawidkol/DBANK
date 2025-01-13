@@ -17,6 +17,6 @@ public interface LoanService {
 
     List<LoanDto> getAllUsersLoans(String userId, int page, int size);
 
-    TransferDto payInstallment(CreateLoanInstallmentTransfer createLoanInstallmentTransfer);
+    TransferDto payInstallment(String loanScheduleId, CreateLoanInstallmentTransfer createLoanInstallmentTransfer);
 
 }
