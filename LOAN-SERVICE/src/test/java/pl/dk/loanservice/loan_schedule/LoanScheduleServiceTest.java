@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import pl.dk.loanservice.enums.PaymentStatus;
 import pl.dk.loanservice.exception.LoanDetailsNotExistsException;
 import pl.dk.loanservice.exception.LoanNotExistsException;
 import pl.dk.loanservice.loan.Loan;
@@ -20,6 +21,7 @@ import pl.dk.loanservice.loan_schedule.dtos.UpdateSchedulePaymentEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +31,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.*;
-import static pl.dk.loanservice.loan_schedule.PaymentStatus.*;
+import static pl.dk.loanservice.enums.PaymentStatus.*;
 
 class LoanScheduleServiceTest {
 
@@ -53,6 +55,8 @@ class LoanScheduleServiceTest {
 
     private AutoCloseable autoCloseable;
 
+    String loanScheduleId;
+
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
@@ -74,8 +78,12 @@ class LoanScheduleServiceTest {
                 .numberOfInstallments(numberOfInstallments)
                 .build();
 
+        loanScheduleId = UUID.randomUUID().toString();
+        String transferId = UUID.randomUUID().toString();
         updateSchedulePaymentEvent = UpdateSchedulePaymentEvent.builder()
-                .loanId(loanId)
+                .loanScheduleId(loanScheduleId)
+                .transferDate(LocalDateTime.now().plusHours(1))
+                .transferId(transferId)
                 .build();
     }
 
@@ -178,62 +186,58 @@ class LoanScheduleServiceTest {
     }
 
     @Test
-    @DisplayName("It should set payment status as PAID_ON_TIME")
-    void itShouldSetPaymentStatusAsPaidOnTime() {
+    @DisplayName("It should set payment status to PENDING")
+    void itShouldSetPaymentStatusAsPaidToPending() {
         // Given
         LoanSchedule loanSchedule = LoanSchedule.builder()
-                .installment(new BigDecimal("500.00"))
-                .paymentDate(LocalDate.now())
-                .deadline(LocalDate.now().plusDays(30))
+                .id(loanScheduleId)
                 .paymentStatus(UNPAID)
-                .loan(Loan.builder().id(UUID.randomUUID().toString()).build())
+                .paymentDate(LocalDate.now())
                 .build();
 
-        when(loanScheduleRepository.findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                updateSchedulePaymentEvent.loanId(),
-                UNPAID,
-                OVERDUE))
-                .thenReturn(List.of(loanSchedule));
+        UpdateSchedulePaymentEvent event = UpdateSchedulePaymentEvent.builder()
+                .loanScheduleId(loanScheduleId)
+                .transferDate(LocalDateTime.now().plusHours(1))
+                .build();
+
+        when(loanScheduleRepository.findById(loanSchedule.getId()))
+                .thenReturn(Optional.of(loanSchedule));
 
         // When
-        underTest.updatePaymentInstallmentStatus(updateSchedulePaymentEvent);
+        underTest.updatePaymentInstallmentStatus(event);
 
         // Then
         assertAll(() -> {
-            verify(loanScheduleRepository, times(1)).findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                    updateSchedulePaymentEvent.loanId(),
-                    UNPAID,
-                    OVERDUE);
+            verify(loanScheduleRepository,
+                    times(1)).findById(loanScheduleId);
         });
     }
 
     @Test
-    @DisplayName("It should set payment status as PAID_LATE")
-    void itShouldSetPaymentStatusAsPaidLate() {
+    @DisplayName("It should set payment status to SCHEDULED")
+    void itShouldSetPaymentStatusToScheduled() {
         // Given
         LoanSchedule loanSchedule = LoanSchedule.builder()
-                .installment(new BigDecimal("500.00"))
-                .paymentDate(LocalDate.now())
-                .deadline(LocalDate.now().minusDays(30))
-                .paymentStatus(OVERDUE)
-                .loan(Loan.builder().id(UUID.randomUUID().toString()).build())
+                .id(loanScheduleId)
+                .paymentStatus(UNPAID)
+                .paymentDate(LocalDate.now().plusDays(1))
                 .build();
 
-        when(loanScheduleRepository.findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                updateSchedulePaymentEvent.loanId(),
-                UNPAID,
-                OVERDUE))
-                .thenReturn(List.of(loanSchedule));
+        UpdateSchedulePaymentEvent event = UpdateSchedulePaymentEvent.builder()
+                .loanScheduleId(loanScheduleId)
+                .transferDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        when(loanScheduleRepository.findById(loanSchedule.getId()))
+                .thenReturn(Optional.of(loanSchedule));
 
         // When
-        underTest.updatePaymentInstallmentStatus(updateSchedulePaymentEvent);
+        underTest.updatePaymentInstallmentStatus(event);
 
         // Then
         assertAll(() -> {
-            verify(loanScheduleRepository, times(1)).findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                    updateSchedulePaymentEvent.loanId(),
-                    UNPAID,
-                    OVERDUE);
+            verify(loanScheduleRepository,
+                    times(1)).findById(loanScheduleId);
         });
     }
 
@@ -242,46 +246,19 @@ class LoanScheduleServiceTest {
     void itShouldPrintLogWhenIsNothingToUpdate() {
         // Given
         LoanSchedule loanSchedule = LoanSchedule.builder()
-                .installment(new BigDecimal("500.00"))
-                .paymentDate(LocalDate.now())
-                .deadline(LocalDate.now().minusDays(30))
-                .paymentStatus(OVERDUE)
-                .loan(Loan.builder().id(UUID.randomUUID().toString()).build())
+                .id(loanScheduleId)
                 .build();
 
-        when(loanScheduleRepository.findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                updateSchedulePaymentEvent.loanId(),
-                UNPAID,
-                OVERDUE))
-                .thenReturn(Collections.emptyList());
+        when(loanScheduleRepository.findById(loanSchedule.getId()))
+                .thenReturn(Optional.empty());
 
         // When
         underTest.updatePaymentInstallmentStatus(updateSchedulePaymentEvent);
 
         // Then
         assertAll(() -> {
-            verify(loanScheduleRepository, times(1)).findAllByLoan_idAndPaymentStatusOrPaymentStatus(
-                    updateSchedulePaymentEvent.loanId(),
-                    UNPAID,
-                    OVERDUE);
-        });
-    }
-
-    @Test
-    @DisplayName("It should set payment status as OVERDUE")
-    void itShouldSetPaymentStatusAsOverdue() {
-        // Given
-        when(loanScheduleRepository.setPaymentStatusFromUnpaidTo(OVERDUE)).thenReturn(3);
-
-        // When
-        underTest.setPaymentStatusAsPaidLate();
-        ArgumentCaptor<PaymentStatus> paymentStatusArgumentCaptor = ArgumentCaptor.forClass(PaymentStatus.class);
-
-        // Then
-        assertAll(() -> {
-            verify(loanScheduleRepository, times(1))
-                    .setPaymentStatusFromUnpaidTo(paymentStatusArgumentCaptor.capture());
-            assertEquals(OVERDUE, paymentStatusArgumentCaptor.getValue());
+            verify(loanScheduleRepository,
+                    times(1)).findById(loanScheduleId);
         });
     }
 

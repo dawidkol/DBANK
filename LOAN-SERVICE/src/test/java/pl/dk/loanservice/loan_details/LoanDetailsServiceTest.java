@@ -15,7 +15,7 @@ import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
 import pl.dk.loanservice.httpClient.dtos.AccountDto;
 import pl.dk.loanservice.loan.Loan;
 import pl.dk.loanservice.loan.LoanRepository;
-import pl.dk.loanservice.loan.LoanStatus;
+import pl.dk.loanservice.enums.LoanStatus;
 import pl.dk.loanservice.loan_details.dtos.LoanDetailsDto;
 import pl.dk.loanservice.loan_schedule.LoanSchedule;
 import pl.dk.loanservice.loan_schedule.LoanScheduleRepository;
