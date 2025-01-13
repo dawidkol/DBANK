@@ -16,6 +16,8 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
+import pl.dk.loanservice.enums.CurrencyType;
+import pl.dk.loanservice.enums.PaymentStatus;
 import pl.dk.loanservice.httpClient.AccountServiceFeignClient;
 import pl.dk.loanservice.httpClient.TransferServiceFeignClient;
 import pl.dk.loanservice.httpClient.UserServiceFeignClient;
@@ -25,6 +27,8 @@ import pl.dk.loanservice.loan.dtos.*;
 import pl.dk.loanservice.loan_details.LoanDetails;
 import pl.dk.loanservice.loan_details.LoanDetailsRepository;
 import pl.dk.loanservice.loan_details.dtos.LoanDetailsDto;
+import pl.dk.loanservice.loan_schedule.LoanSchedule;
+import pl.dk.loanservice.loan_schedule.LoanScheduleRepository;
 import pl.dk.loanservice.loan_schedule.dtos.LoanScheduleDto;
 
 import java.math.BigDecimal;
@@ -32,6 +36,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,9 +68,10 @@ class LoanControllerTest {
     @MockitoBean
     private LoanDetailsRepository loanDetailsRepository;
 
-
     CreateLoanDto createLoanDto;
     UserDto userDto;
+    @MockitoBean
+    private LoanScheduleRepository loanScheduleRepository;
 
     @BeforeEach
     void setUp() {
@@ -79,6 +85,7 @@ class LoanControllerTest {
                 .avgIncome(new BigDecimal("5000.00")) // Average monthly income
                 .avgExpenses(new BigDecimal("2000.00")) // Average monthly expenses
                 .existingLoanRepayments(new BigDecimal("300.00")) // Existing loan repayments
+                .currencyType(CurrencyType.PLN.name())
                 .build();
 
         userDto = UserDto.builder()
@@ -168,7 +175,6 @@ class LoanControllerTest {
         String senderAccountNumber = "00000000000000000000000000";
         String recipientAccountNumber = "11111111111111111111111111";
         CreateLoanInstallmentTransfer createLoanInstallmentTransfer = CreateLoanInstallmentTransfer.builder()
-                .loanId(location)
                 .senderAccountNumber(senderAccountNumber)
                 .transferDate(LocalDateTime.now().plusMonths(3))
                 .description("Monthly rent payment")
@@ -177,22 +183,46 @@ class LoanControllerTest {
         TransferDto transferDto = TransferDto.builder()
                 .recipientAccountNumber(recipientAccountNumber)
                 .senderAccountNumber(senderAccountNumber)
+                .transferDate(LocalDateTime.now())
+                .transferId(UUID.randomUUID().toString())
                 .amount(amount)
                 .build();
 
+        Loan loan = Loan.builder()
+                .id(location).
+                currencyType(CurrencyType.PLN)
+                .build();
         LoanDetails loanDetails = LoanDetails.builder()
+                .id(UUID.randomUUID().toString())
                 .loanAccountNumber(recipientAccountNumber)
-                .loan(Loan.builder().id(location).build())
+                .loan(loan)
                 .build();
 
-        Mockito.when(loanDetailsRepository.findByLoan_id(any())).thenReturn(Optional.of(loanDetails));
-        Mockito.when(accountServiceFeignClient.getAvgLast12Moths(userId)).thenReturn(ResponseEntity.of(Optional.of(BigDecimal.valueOf(15000))));
-        Mockito.when(transferServiceFeignClient.createTransfer(any())).thenReturn(ResponseEntity.status(201).body(transferDto));
+        String loanScheduleId = UUID.randomUUID().toString();
+        LoanSchedule loanSchedule = LoanSchedule.builder()
+                .id(loanScheduleId)
+                .installment(new BigDecimal("500.00"))
+                .deadline(LocalDate.now().plusMonths(1))
+                .paymentStatus(PaymentStatus.UNPAID)
+                .loan(loan)
+                .installment(BigDecimal.TEN)
+                .build();
+
+        Mockito.when(loanScheduleRepository.findById(loanScheduleId))
+                .thenReturn(Optional.of(loanSchedule));
+        Mockito.when(loanDetailsRepository.findByLoan_id(loanDetails.getLoan().getId()))
+                .thenReturn(Optional.of(loanDetails));
+        Mockito.when(transferServiceFeignClient.createTransfer(any()))
+                .thenReturn(ResponseEntity.status(201)
+                        .body(transferDto));
 
         // When
-        ResponseEntity<TransferDto> transferDtoResponseEntity = testRestTemplate.postForEntity("/loans/pay",
+        ResponseEntity<TransferDto> transferDtoResponseEntity = testRestTemplate.postForEntity(
+                "/loans/{loanScheduleId}/pay",
                 new HttpEntity<>(createLoanInstallmentTransfer),
-                TransferDto.class);
+                TransferDto.class,
+                loanScheduleId
+        );
 
         // Then
         assertAll(() -> {
@@ -205,7 +235,10 @@ class LoanControllerTest {
                 .thenReturn(ResponseEntity.ok(AccountDto.builder().balance(BigDecimal.TEN).build()));
 
         // When
-        ResponseEntity<LoanDetailsDto> getLoanDetails = testRestTemplate.getForEntity("/loan-details/{loanId}", LoanDetailsDto.class, location);
+        ResponseEntity<LoanDetailsDto> getLoanDetails = testRestTemplate.getForEntity(
+                "/loan-details/{loanId}",
+                LoanDetailsDto.class,
+                location);
 
         // Then
         assertAll(() -> {
