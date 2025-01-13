@@ -165,14 +165,11 @@ class LoanServiceImpl implements LoanService {
 
         Loan loan = loanSchedule.getLoan();
 
-        BigDecimal monthlyInstallment = calculateMonthlyInstallment(
-                loan.getAmount(),
-                loan.getInterestRate(),
-                loan.getNumberOfInstallments());
+        BigDecimal installment = loanSchedule.getInstallment();
 
         CreateTransferDto createTransferDto = buildCreateTransferDtoObject(
                 createLoanInstallmentTransfer,
-                monthlyInstallment,
+                installment,
                 loan);
 
         ResponseEntity<TransferDto> transferDtoResponseEntity = transferServiceFeignClient.createTransfer(createTransferDto);
@@ -180,9 +177,9 @@ class LoanServiceImpl implements LoanService {
         if (validateTransferServiceResponse(responseStatusCode)) {
             TransferDto body = transferDtoResponseEntity.getBody();
             applicationEventPublisher.publishEvent(UpdateSchedulePaymentEvent.builder()
-                    .loanScheduleId(loanScheduleId).
-                    transferId(body.transferId()).
-                    transferDate(body.transferDate())
+                    .loanScheduleId(loanScheduleId)
+                    .transferId(body.transferId())
+                    .transferDate(body.transferDate())
                     .build());
             return transferDtoResponseEntity.getBody();
         }

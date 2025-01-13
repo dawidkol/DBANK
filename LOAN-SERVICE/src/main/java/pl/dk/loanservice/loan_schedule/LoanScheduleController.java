@@ -16,10 +16,16 @@ import java.util.List;
 class LoanScheduleController {
 
     private final LoanScheduleService loanScheduleService;
+    private final SchedulerLoanSchedule schedulerLoanSchedule;
 
     @GetMapping("/{loanId}")
     public ResponseEntity<List<LoanScheduleDto>> getLoanSchedule(@PathVariable String loanId) {
         List<LoanScheduleDto> loanSchedule = loanScheduleService.getLoanSchedule(loanId);
         return ResponseEntity.ok(loanSchedule);
+    }
+
+    @GetMapping("/test")
+    public void test() {
+        schedulerLoanSchedule.updateLoanSchedulePayment();
     }
 }

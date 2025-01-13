@@ -63,7 +63,8 @@ class LoanController {
     }
 
     @PostMapping("/{loanScheduleId}/pay")
-    public ResponseEntity<TransferDto> payInstallment(@PathVariable String loanScheduleId, @Valid @RequestBody CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
+    public ResponseEntity<TransferDto> payInstallment(@PathVariable String loanScheduleId,
+                                                      @Valid @RequestBody CreateLoanInstallmentTransfer createLoanInstallmentTransfer) {
         TransferDto transferDto = loanService.payInstallment(loanScheduleId, createLoanInstallmentTransfer);
         return ResponseEntity.status(HttpStatus.CREATED).body(transferDto);
     }
