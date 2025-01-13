@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pl.dk.transfer_service.constants.TransferServiceConstants;
 import pl.dk.transfer_service.transfer.dtos.CreateTransferDto;
 import pl.dk.transfer_service.transfer.dtos.TransferDto;
 
