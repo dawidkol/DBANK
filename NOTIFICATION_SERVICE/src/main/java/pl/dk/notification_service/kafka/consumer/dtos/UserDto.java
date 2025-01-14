@@ -1,4 +1,4 @@
-package pl.dk.notification_service.consumer.dtos;
+package pl.dk.notification_service.kafka.consumer.dtos;
 
 import lombok.Builder;
 

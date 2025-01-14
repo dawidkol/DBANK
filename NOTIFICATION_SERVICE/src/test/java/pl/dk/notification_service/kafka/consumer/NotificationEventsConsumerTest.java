@@ -1,4 +1,4 @@
-package pl.dk.notification_service.consumer;
+package pl.dk.notification_service.kafka.consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,13 +36,13 @@ class NotificationEventsConsumerTest {
     private EmbeddedKafkaBroker embeddedKafkaBroker;
 
     @Autowired
-    private KafkaTemplate<String, SaveUserDto> kafkaTemplate;
+    private KafkaTemplate<String, pl.dk.notification_service.kafka.consumer.SaveUserDto> kafkaTemplate;
 
     @Autowired
     private KafkaListenerEndpointRegistry endpointRegistry;
 
     @MockitoSpyBean
-    private NotificationEventsConsumer notificationEventsConsumerSpy;
+    private EmailNotification notificationEventsConsumerSpy;
 
 
     @BeforeEach
@@ -56,7 +56,7 @@ class NotificationEventsConsumerTest {
     @DisplayName("It should send Notification successfully")
     void itShouldSendNotificationSuccessfully() throws InterruptedException {
         // Given
-        SaveUserDto saveUserDto = SaveUserDto.builder()
+        pl.dk.notification_service.kafka.consumer.SaveUserDto saveUserDto = pl.dk.notification_service.kafka.consumer.SaveUserDto.builder()
                 .firstName("John")
                 .lastName("Doe")
                 .email("dkcodepro@gmail.com")
@@ -72,7 +72,7 @@ class NotificationEventsConsumerTest {
 
         // Then
         verify(notificationEventsConsumerSpy, times(1))
-                .onMessage(isA(ConsumerRecord.class));
+                .onUserServiceMessage(isA(ConsumerRecord.class));
 
     }
 }
