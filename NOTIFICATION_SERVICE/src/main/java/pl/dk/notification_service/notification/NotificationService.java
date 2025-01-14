@@ -1,10 +1,13 @@
 package pl.dk.notification_service.notification;
 
 
-import pl.dk.notification_service.consumer.dtos.UserDto;
+import pl.dk.notification_service.notification.dtos.Email;
+import pl.dk.notification_service.notification.dtos.Sms;
 
 public interface NotificationService {
 
-    void sendUserEmailRegistrationConfirmation(UserDto userDto);
-    void sendUserSmsRegistrationConfirmation(UserDto userDto);
+    void sendEmail(Email email);
+
+    void sendSms(Sms sms);
+
 }
