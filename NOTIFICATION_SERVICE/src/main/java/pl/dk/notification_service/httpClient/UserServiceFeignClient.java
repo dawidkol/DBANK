@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import pl.dk.notification_service.kafka.consumer.dtos.UserDto;
 
-@FeignClient(value = "user-service", dismiss404 = true)
+@FeignClient(value = "user-service", dismiss404 = true, fallback = UserServiceFeignClientImpl.class)
 public interface UserServiceFeignClient {
 
     @GetMapping("/users/{userId}")

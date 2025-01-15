@@ -11,35 +11,39 @@ import java.util.Properties;
 
 @Configuration
 class EmailConfig {
-    @Value("${app.mail.host}")
-    private String host;
 
-    @Value("${app.mail.port}")
-    private int port;
+    private final String host;
+    private final int port;
+    private final String email;
+    private final String password;
+    private final String protocolKey;
+    private final String protocolValue;
+    private final String smtpKey;
+    private final String smtpValue;
+    private final String starttlsKey;
+    private final String starttlsValue;
 
-    @Value("${app.mail.username}")
-    private String email;
-
-    @Value("${app.mail.password}")
-    private String password;
-
-    @Value("${app.mail.protocol-key}")
-    private String protocolKey;
-
-    @Value("${app.mail.protocol-value}")
-    private String protocolValue;
-
-    @Value("${app.mail.smtp-key}")
-    private String smtpKey;
-
-    @Value("${app.mail.smtp-value}")
-    private String smtpValue;
-
-    @Value("${app.mail.starttls-key}")
-    private String starttlsKey;
-
-    @Value("${app.mail.starttls-value}")
-    private String starttlsValue;
+    public EmailConfig(@Value("${app.mail.host}") String host,
+                       @Value("${app.mail.port}") int port,
+                       @Value("${app.mail.username}") String email,
+                       @Value("${app.mail.password}") String password,
+                       @Value("${app.mail.protocol-key}") String protocolKey,
+                       @Value("${app.mail.protocol-value}") String protocolValue,
+                       @Value("${app.mail.smtp-key}") String smtpKey,
+                       @Value("${app.mail.smtp-value}") String smtpValue,
+                       @Value("${app.mail.starttls-key}") String starttlsKey,
+                       @Value("${app.mail.starttls-value}") String starttlsValue) {
+        this.host = host;
+        this.port = port;
+        this.email = email;
+        this.password = password;
+        this.protocolKey = protocolKey;
+        this.protocolValue = protocolValue;
+        this.smtpKey = smtpKey;
+        this.smtpValue = smtpValue;
+        this.starttlsKey = starttlsKey;
+        this.starttlsValue = starttlsValue;
+    }
 
     @Bean
     public JavaMailSender createJavaMailSenderImpl() {
