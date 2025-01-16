@@ -19,15 +19,22 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.use.type.headers: false
+        retries: 3
+        retry-backoff-ms: 5000
       group-id: notification-events-listener-group
     listener:
       concurrency: 3
+      ack-mode: manual
 
     # SETUP FOR KAFKA INTEGRATION TEST: PRODUCER
     producer:
       bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
 
 logging:
   level:
@@ -51,9 +58,16 @@ app:
 
 # SETUP FOR SENDING SMS
 twilio:
-  phone:
-    number:
-      from: ${TWILIO_PHONE_NUMBER}
+  phone-number: ${TWILIO_PHONE_NUMBER}
   account-sid: ${TWILIO_ACCOUNT_SID}
   auth-token: ${TWILIO_AUTH_TOKEN}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 2
 
