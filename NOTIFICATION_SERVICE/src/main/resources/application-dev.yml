@@ -21,11 +21,10 @@ spring:
         spring.json.use.type.headers: false
         retries: 3
         retry-backoff-ms: 5000
-        dead-letter-policy: true
-        ack-mode: MANUAL
       group-id: notification-events-listener-group
     listener:
       concurrency: 3
+      ack-mode: manual
 
     # SETUP FOR KAFKA INTEGRATION TEST: PRODUCER
     producer:

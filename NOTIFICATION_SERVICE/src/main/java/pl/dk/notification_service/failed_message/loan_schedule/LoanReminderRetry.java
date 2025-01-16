@@ -1,9 +1,8 @@
-package pl.dk.notification_service.loan_reminder;
+package pl.dk.notification_service.failed_message.loan_schedule;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+import pl.dk.notification_service.failed_message.BaseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,7 +17,9 @@ import java.time.LocalDateTime;
 public class LoanReminderRetry extends BaseEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+    private String loanScheduleId;
     private BigDecimal installment;
     private LocalDate deadline;
     private String paymentStatus;
@@ -31,6 +32,7 @@ public class LoanReminderRetry extends BaseEntity {
                              LocalDateTime updatedAt,
                              String updatedBy,
                              String id,
+                             String loanScheduleId,
                              BigDecimal installment,
                              LocalDate deadline,
                              String paymentStatus,
@@ -38,6 +40,7 @@ public class LoanReminderRetry extends BaseEntity {
                              Boolean sent) {
         super(createdAt, createdBy, updatedAt, updatedBy);
         this.id = id;
+        this.loanScheduleId = loanScheduleId;
         this.installment = installment;
         this.deadline = deadline;
         this.paymentStatus = paymentStatus;

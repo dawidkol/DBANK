@@ -1,4 +1,4 @@
-package pl.dk.notification_service.loan_reminder;
+package pl.dk.notification_service.failed_message.loan_schedule;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import pl.dk.notification_service.kafka.consumer.dtos.LoanScheduleReminder;

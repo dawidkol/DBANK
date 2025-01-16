@@ -1,4 +1,4 @@
-package pl.dk.notification_service.loan_reminder;
+package pl.dk.notification_service.failed_message;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

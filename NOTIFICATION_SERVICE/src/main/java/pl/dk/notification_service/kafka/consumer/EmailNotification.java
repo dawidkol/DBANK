@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import pl.dk.notification_service.kafka.consumer.dtos.LoanScheduleReminder;
 import pl.dk.notification_service.kafka.consumer.dtos.UserDto;
 import pl.dk.notification_service.httpClient.UserServiceFeignClient;
-import pl.dk.notification_service.loan_reminder.LoanReminderRetryService;
+import pl.dk.notification_service.failed_message.loan_schedule.LoanReminderRetryService;
 import pl.dk.notification_service.notification.NotificationService;
 import pl.dk.notification_service.notification.dtos.Email;
 
@@ -41,7 +41,7 @@ class EmailNotification {
     @Async
     @KafkaListener(topics = {TOPIC_REGISTRATION},
             properties = "spring.json.value.default.type=pl.dk.notification_service.kafka.consumer.dtos.UserDto")
-    public void onUserServiceMessage(ConsumerRecord<String, UserDto> consumerRecord) {
+    public void sendUserRegistrationEmail(ConsumerRecord<String, UserDto> consumerRecord) {
         UserDto userDto = consumerRecord.value();
         log.info("ConsumerRecord: {}", consumerRecord);
         Email email = Email.builder()
@@ -73,7 +73,7 @@ class EmailNotification {
     @Async
     @KafkaListener(topics = LOAN_SERVICE_LOAN_REMINDER,
             properties = "spring.json.value.default.type=pl.dk.notification_service.kafka.consumer.dtos.LoanScheduleReminder")
-    public void onLoanServiceMessage(ConsumerRecord<String, LoanScheduleReminder> record, Acknowledgment acknowledgment) {
+    public void sendLoanReminderEmail(ConsumerRecord<String, LoanScheduleReminder> record, Acknowledgment acknowledgment) {
         LoanScheduleReminder loanScheduleReminder = record.value();
         String userId = loanScheduleReminder.userId();
         try {
@@ -86,7 +86,6 @@ class EmailNotification {
                         .message(createLoanReminderMessage(userDto, loanScheduleReminder))
                         .build();
                 notificationService.sendEmail(email);
-                acknowledgment.acknowledge();
             } else {
                 log.warn("User-Service returned status {} for userId {}", userById.getStatusCode(), userId);
                 throw new RuntimeException("User-Service returned non-OK status");
@@ -95,6 +94,7 @@ class EmailNotification {
             log.error("Error processing loan reminder for userId {}: {}", userId, ex.getMessage());
             loanReminderRetryService.save(record);
         }
+        acknowledgment.acknowledge();
     }
 
     private String createLoanReminderMessage(UserDto userDto, LoanScheduleReminder loanScheduleReminder) {

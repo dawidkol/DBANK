@@ -1,4 +1,4 @@
-package pl.dk.notification_service.loan_reminder;
+package pl.dk.notification_service.failed_message;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,10 +16,10 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
                 "scheduler.reminder.retry=0/1 * * * * *",
                 "scheduler.reminder.clean=0/1 * * * * *"},
         webEnvironment = RANDOM_PORT)
-class LoanReminderRetrySchedulerTest {
+class FailedMessageSchedulerTest {
 
     @MockitoSpyBean
-    private LoanReminderRetryScheduler underTest;
+    private FailedMessageScheduler underTest;
 
     @Test
     @DisplayName("It should invoke all scheduler methods successfully")

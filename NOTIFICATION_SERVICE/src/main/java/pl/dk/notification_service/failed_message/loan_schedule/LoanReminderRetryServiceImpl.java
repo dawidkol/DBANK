@@ -1,4 +1,4 @@
-package pl.dk.notification_service.loan_reminder;
+package pl.dk.notification_service.failed_message.loan_schedule;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ class LoanReminderRetryServiceImpl implements LoanReminderRetryService {
     public void save(ConsumerRecord<String, LoanScheduleReminder> record) {
         LoanScheduleReminder value = record.value();
         LoanReminderRetry toSave = LoanReminderRetry.builder()
-                .id(record.key())
+                .loanScheduleId(value.loanScheduleId())
                 .installment(value.installment())
                 .deadline(value.deadline())
                 .paymentStatus(value.paymentStatus())
@@ -41,6 +41,7 @@ class LoanReminderRetryServiceImpl implements LoanReminderRetryService {
     @Override
     @Transactional
     public void retryFailedLoanReminders() {
+        log.info("Starting saving unprocessed kafka LoanSchedule");
         LocalDate now = LocalDate.now();
         List<LoanReminderRetry> list = loanReminderRepository.findAllByDeadlineIsLessThanEqualAndSent(
                         now,
@@ -49,15 +50,17 @@ class LoanReminderRetryServiceImpl implements LoanReminderRetryService {
                 .stream()
                 .peek(loanReminderRetry -> {
                     LoanScheduleReminder loanScheduleReminderData = LoanScheduleReminder.builder()
-                            .id(loanReminderRetry.getId())
+                            .loanScheduleId(loanReminderRetry.getLoanScheduleId())
                             .deadline(loanReminderRetry.getDeadline())
                             .installment(loanReminderRetry.getInstallment())
                             .paymentStatus(loanReminderRetry.getPaymentStatus())
                             .build();
+
                     loanScheduleKafkaTemplate.send(
                             LOAN_SERVICE_LOAN_REMINDER,
-                            loanReminderRetry.getId(),
+                            loanReminderRetry.getLoanScheduleId(),
                             loanScheduleReminderData);
+
                     loanReminderRetry.setSent(true);
                 }).toList();
         if (!list.isEmpty()) {
