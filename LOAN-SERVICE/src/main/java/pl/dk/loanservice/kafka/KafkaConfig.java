@@ -26,4 +26,12 @@ class KafkaConfig {
                 .build();
     }
 
+    @Bean
+    public NewTopic createNotificationLoanReminderTopic() {
+        return TopicBuilder.name(LOAN_SERVICE_LOAN_REMINDER)
+                .replicas(3)
+                .partitions(3)
+                .build();
+    }
+
 }

@@ -40,4 +40,8 @@ public interface LoanScheduleRepository extends JpaRepository<LoanSchedule, Stri
            "WHERE l.paymentDate <= CURRENT DATE and l.paymentStatus = 'SCHEDULED'")
     @Modifying
     int updateStatusFromScheduledTo(@Param("newStatus") PaymentStatus paymentStatus);
+
+    List<LoanSchedule> findAllByDeadlineBefore(LocalDate deadlineBefore);
+
+    List<LoanSchedule> findAllByDeadlineBeforeAndPaymentStatusIn(LocalDate deadlineBefore, Collection<PaymentStatus> paymentStatuses);
 }

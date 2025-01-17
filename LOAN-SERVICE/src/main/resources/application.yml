@@ -19,3 +19,4 @@ scheduler:
     overdue: 0 0/15 0-1 * * *
     pending: 0 0/15 2-3 * * *
     loan-payment: 0 0/15 4-5,22-23 * * *
+    loan-schedule-reminder: 0 0 6 * * *
