@@ -1,0 +1,65 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:test
+    username: sa
+    password:
+  output:
+    ansi:
+      enabled: always
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        retries: 3
+        retry-backoff-ms: 5000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+      open-in-view: false
+
+  h2:
+    console:
+      enabled: true
+
+  flyway:
+    locations:
+    - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+  docker:
+    compose:
+      stop:
+        command: down
+        arguments:
+          - --remove-orphans
+          - -v
+      file: user-service/docker-compose.yml
+
+logging:
+  level:
+    pl:
+      dk:
+        UserService: TRACE
+    org:
+      flywaydb: TRACE
+      hibernate:
+        orm:
+          jdbc:
+            bind: TRACE
