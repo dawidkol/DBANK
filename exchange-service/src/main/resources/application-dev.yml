@@ -31,7 +31,6 @@ spring:
     clean-disabled: false
     enabled: true
     execute-in-transaction: true
-
 logging:
   level:
     pl:
