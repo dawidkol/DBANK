@@ -11,7 +11,9 @@ import pl.dk.exchange_service.enums.CurrencyType;
 import pl.dk.exchange_service.httpclient.dtos.CurrencyReceiver;
 import pl.dk.exchange_service.httpclient.dtos.Rates;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,8 +39,19 @@ class CurrencyHttpClient {
     public void fetchCurrencies() {
         List<Currency> currenciesToSave = new ArrayList<>();
         for (CurrencyType currencyCode : CurrencyType.values()) {
-            if (currencyCode.equals(CurrencyType.PLN))
-                continue;
+            if (currencyCode.equals(CurrencyType.PLN)) {
+                if (currencyRepository.findFirstByCurrencyType(CurrencyType.PLN).isEmpty()) {
+                    Currency PLN = Currency.builder()
+                            .name("Polski złoty")
+                            .currencyType(CurrencyType.PLN)
+                            .effectiveDate(LocalDate.now())
+                            .bid(BigDecimal.ONE)
+                            .ask(BigDecimal.ONE)
+                            .build();
+                    currenciesToSave.add(PLN);
+                    continue;
+                }
+            }
 
             String uri = ("/exchangerates/rates/c/{currencyType}");
             CurrencyReceiver currency = restClient.get()
@@ -49,7 +62,7 @@ class CurrencyHttpClient {
 
             if (currency != null) {
                 Rates rate = currency.rates()[0];
-                currencyRepository.findAllByCurrencyType(currencyCode)
+                currencyRepository.findFirstByCurrencyType(currencyCode)
                         .ifPresentOrElse(existingCurrency -> {
                             updateCurrency(existingCurrency, rate);
                         }, () -> {
