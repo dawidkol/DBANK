@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import pl.dk.exchange_service.constraint.CurrencyTypeConstraint;
 import pl.dk.exchange_service.enums.CurrencyType;
 
 import java.math.BigDecimal;
@@ -26,9 +27,10 @@ public class Currency extends BaseEntity {
     @NotNull
     @NotBlank
     private String name;
+    @NotNull
+    @CurrencyTypeConstraint
     @Enumerated(EnumType.STRING)
     @Column(unique = true)
-    @NotNull
     private CurrencyType currencyType;
     private LocalDate effectiveDate;
     @NotNull

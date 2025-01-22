@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
+import pl.dk.exchange_service.constraint.CurrencyTypeConstraint;
 import pl.dk.exchange_service.currency.BaseEntity;
 import pl.dk.exchange_service.enums.CurrencyType;
 
@@ -28,12 +29,14 @@ class Exchange extends BaseEntity {
     @NotBlank
     private String accountNumber;
     @NotNull
+    @CurrencyTypeConstraint
     @Enumerated(EnumType.STRING)
     private CurrencyType currencyFrom;
     @NotNull
     @Positive
     private BigDecimal valueFrom;
     @NotNull
+    @CurrencyTypeConstraint
     @Enumerated(EnumType.STRING)
     private CurrencyType currencyTo;
     @NotNull
