@@ -1,6 +1,7 @@
 package pl.dk.exchange_service.exchange;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,4 +110,12 @@ class ExchangeServiceImpl implements ExchangeService {
         return result;
     }
 
+    @Override
+    public List<ExchangeResultDto> getAllAccountExchanges(String accountNumber, int page, int size) {
+        --page;
+        return exchangeRepository.findAllByAccountNumber(accountNumber, PageRequest.of(page, size))
+                .stream()
+                .map(exchange -> ExchangeDtoMapper.map(exchange, null))
+                .toList();
+    }
 }
