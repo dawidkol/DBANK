@@ -18,7 +18,7 @@ class AccountServiceFallbackFactory implements FallbackFactory<AccountServiceFei
 
     @Override
     public AccountServiceFeignClient create(Throwable cause) {
-        if (cause instanceof FeignException.BadRequest) {
+        if (cause instanceof FeignException.FeignClientException) {
             // Extract the JSON part of the response
             String message = cause.getMessage();
             String jsonPart = message.substring(message.indexOf("{"), message.lastIndexOf("}") + 1);

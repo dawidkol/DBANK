@@ -5,6 +5,11 @@ spring:
   profiles:
     active: dev
 
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+
 eureka:
   instance:
     prefer-ip-address: true
