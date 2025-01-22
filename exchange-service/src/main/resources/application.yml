@@ -5,6 +5,11 @@ spring:
   profiles:
     active: dev
 
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+
 eureka:
   instance:
     prefer-ip-address: true
@@ -14,3 +19,5 @@ eureka:
     service-url:
       defaultZone: http://localhost:8000/eureka
 
+scheduler:
+  update-currencies: 0 0 * * * *

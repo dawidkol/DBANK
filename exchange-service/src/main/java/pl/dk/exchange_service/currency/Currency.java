@@ -3,10 +3,9 @@ package pl.dk.exchange_service.currency;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
+import pl.dk.exchange_service.constraint.CurrencyTypeConstraint;
 import pl.dk.exchange_service.enums.CurrencyType;
 
 import java.math.BigDecimal;
@@ -18,7 +17,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
-class Currency extends BaseEntity{
+@ToString
+@DynamicUpdate
+public class Currency extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,9 +27,10 @@ class Currency extends BaseEntity{
     @NotNull
     @NotBlank
     private String name;
+    @NotNull
+    @CurrencyTypeConstraint
     @Enumerated(EnumType.STRING)
     @Column(unique = true)
-    @NotNull
     private CurrencyType currencyType;
     private LocalDate effectiveDate;
     @NotNull
