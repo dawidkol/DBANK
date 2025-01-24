@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -19,12 +19,15 @@ import pl.dk.cardservice.httpclient.dto.AccountDto;
 import pl.dk.cardservice.httpclient.dto.UserDto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.*;
+import static org.springframework.http.HttpMethod.*;
+import static org.springframework.http.HttpStatus.*;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT,
         properties = {"eureka.client.enabled=false", "scheduler.cards-active=0/1 * * * * *"})
@@ -62,16 +65,62 @@ class CardControllerTest {
                         .build()));
 
         // When
-        ResponseEntity<CardDto> cardDtoResponseEntity = testRestTemplate.postForEntity("/cards", createCardDto, CardDto.class);
+        ResponseEntity<CardDto> cardDtoResponseEntity = testRestTemplate.postForEntity(
+                "/cards",
+                createCardDto,
+                CardDto.class);
 
         // Then
         assertAll(() -> {
             verify(userServiceFeignClient, times(1)).getUserById(anyString());
             verify(accountServiceFeignClient, times(1)).getAccountById(anyString());
         }, () -> {
-            assertEquals(HttpStatus.CREATED, cardDtoResponseEntity.getStatusCode());
+            assertEquals(CREATED, cardDtoResponseEntity.getStatusCode());
             assertNotNull(cardDtoResponseEntity.getBody());
         });
+
+        // 2. User wants to get card by given id. Expected status code: 200 OK
+        // Given
+        String cardId = cardDtoResponseEntity.getBody().cardId();
+
+        // When
+        ResponseEntity<CardDto> forEntity = testRestTemplate.getForEntity(
+                "/cards/{cardId}",
+                CardDto.class,
+                cardId);
+
+        // Then
+        assertAll(() -> {
+            assertEquals(OK, forEntity.getStatusCode());
+            assertNotNull(forEntity.getBody());
+        });
+
+        // 3. User wants to get all his active cards. Expected status code: 200 OK
+        // Given // When
+        ResponseEntity<List<CardDto>> userCardsList = testRestTemplate.exchange("/cards/{userId}/all",
+                GET,
+                null,
+                new ParameterizedTypeReference<List<CardDto>>() {
+                },
+                createCardDto.userId());
+
+        // Then
+        assertAll(() -> {
+            assertEquals(1, userCardsList.getBody().size());
+        });
+
+        // 4. User wants to delete his card. Expected status code 204 NO_CONTENT
+        // Given // When
+        ResponseEntity<Void> delete = testRestTemplate.exchange(
+                "/cards/{cardId}",
+                DELETE,
+                null, Void.class,
+                cardDtoResponseEntity.getBody().cardId());
+        // Then
+        assertAll(() -> {
+            assertEquals(NO_CONTENT, delete.getStatusCode());
+        });
+
     }
 
     @Test

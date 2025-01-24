@@ -1,6 +1,7 @@
 package pl.dk.cardservice.card;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import pl.dk.cardservice.card.dtos.CardDto;
 import pl.dk.cardservice.card.dtos.CreateCardDto;
+import pl.dk.cardservice.exception.CardNotFoundException;
 import pl.dk.cardservice.exception.FeignClientException;
 import pl.dk.cardservice.httpclient.AccountServiceFeignClient;
 import pl.dk.cardservice.httpclient.UserServiceFeignClient;
@@ -15,6 +17,7 @@ import pl.dk.cardservice.httpclient.dto.AccountDto;
 import pl.dk.cardservice.httpclient.dto.UserDto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -67,4 +70,31 @@ class CardServiceImpl implements CardService {
         }
         return userDto;
     }
+
+    @Override
+    public CardDto getCardById(String cardId) {
+        return cardRepository.findById(cardId)
+                .map(CardDtoMapper::map)
+                .orElseThrow(() ->
+                        new CardNotFoundException("Card with id %s not found".formatted(cardId)));
+    }
+
+    @Override
+    public List<CardDto> getAllUserCards(String userId, int page, int size, Boolean isActive) {
+        --page;
+        return cardRepository.findAllByUserIdAndIsActive(userId, isActive, PageRequest.of(page, size))
+                .stream()
+                .map(CardDtoMapper::map)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteCard(String cardId) {
+        cardRepository.findByIdAndIsActive(cardId, true)
+                .ifPresentOrElse(card -> card.setIsActive(false), () -> {
+                    throw new CardNotFoundException("Card with id %s not found".formatted(cardId));
+                });
+    }
+
 }
