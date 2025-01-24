@@ -11,7 +11,7 @@ class CardDtoMapper {
                 .accountNumber(hideAccountNumber(card.getAccountNumber()))
                 .userId(hideUuid(card.getUserId()))
                 .cardHolderName(hideCardHolder(card.getCardHolderName()))
-                .activeFrom(card.getActiveFrom())
+                .activeFrom(card.getActiveStart())
                 .expiryDate(card.getExpiryDate())
                 .cvv(hideCvv(card.getCvv()))
                 .cardType(card.getCardType())

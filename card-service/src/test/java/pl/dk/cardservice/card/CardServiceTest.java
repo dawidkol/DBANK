@@ -74,7 +74,7 @@ class CardServiceTest {
                 .accountNumber(createCardDto.accountNumber())
                 .userId(createCardDto.userId())
                 .cardHolderName("John Doe")
-                .activeFrom(createCardDto.activeStart())
+                .activeStart(createCardDto.activeStart())
                 .expiryDate(createCardDto.activeStart().plusYears(createCardDto.yearsValid()))
                 .cvv("123")
                 .cardType(CardType.CREDIT)
@@ -99,7 +99,7 @@ class CardServiceTest {
             assertNotNull(card.getAccountNumber());
             assertNotNull(card.getUserId());
             assertNotNull(card.getCardHolderName());
-            assertEquals(card.getActiveFrom(), result.activeFrom());
+            assertEquals(card.getActiveStart(), result.activeFrom());
             assertEquals(card.getExpiryDate(), result.expiryDate());
             assertNotNull(card.getCvv());
             assertEquals(card.getCardType(), result.cardType());

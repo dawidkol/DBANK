@@ -2,14 +2,14 @@ package pl.dk.cardservice.card;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import pl.dk.cardservice.card.dtos.CardDto;
 import pl.dk.cardservice.card.dtos.CreateCardDto;
 import pl.dk.cardservice.enums.CardType;
@@ -20,13 +20,15 @@ import pl.dk.cardservice.httpclient.dto.UserDto;
 
 import java.time.LocalDate;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.*;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT,
-        properties = "eureka.client.enabled=false")
+        properties = {"eureka.client.enabled=false", "scheduler.cards-active=0/1 * * * * *"})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CardControllerTest {
 
     @MockitoBean
@@ -36,6 +38,9 @@ class CardControllerTest {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+
+    @MockitoSpyBean
+    private CardScheduler cardScheduler;
 
     @Test
     @DisplayName("Typical scenario with Card Controller")
@@ -66,6 +71,15 @@ class CardControllerTest {
         }, () -> {
             assertEquals(HttpStatus.CREATED, cardDtoResponseEntity.getStatusCode());
             assertNotNull(cardDtoResponseEntity.getBody());
+        });
+    }
+
+    @Test
+    @DisplayName("It should invoke scheduler methods successfully")
+    void itShouldInvokeSchedulerMethodsSuccessfully() {
+        // Given // When // Then
+        await().untilAsserted(() -> {
+            verify(cardScheduler, atLeastOnce()).activeCards();
         });
     }
 }

@@ -15,4 +15,4 @@ eureka:
       defaultZone: http://localhost:8000/eureka
 
 scheduler:
-  update-currencies: 0 0 * * * *
+  cards-active: 0 0 0 * * *

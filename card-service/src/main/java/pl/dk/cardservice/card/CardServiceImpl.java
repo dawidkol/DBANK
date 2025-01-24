@@ -37,7 +37,7 @@ class CardServiceImpl implements CardService {
                 .accountNumber(createCardDto.accountNumber())
                 .userId(userDto.userId())
                 .cardHolderName(userDto.firstName() + " " + userDto.lastName())
-                .activeFrom(createCardDto.activeStart())
+                .activeStart(createCardDto.activeStart())
                 .expiryDate(createCardDto.activeStart().plusYears(createCardDto.yearsValid()))
                 .cvv(cardDataGenerator.generateCvv())
                 .cardType(createCardDto.cardType())

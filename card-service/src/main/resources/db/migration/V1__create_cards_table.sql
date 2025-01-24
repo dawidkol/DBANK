@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS cards
     account_number   VARCHAR(36)  NOT NULL,
     user_id          VARCHAR(36)  NOT NULL,
     card_holder_name VARCHAR(150) NOT NULL,
-    active_from      DATE         NOT NULL,
+    active_start      DATE         NOT NULL,
     expiry_date      DATE         NOT NULL,
     cvv              VARCHAR(3)   NOT NULL,
     card_type        VARCHAR(30)  NOT NULL,

@@ -38,7 +38,7 @@ class Card extends BaseEntity {
     private String cardHolderName;
     @NotNull
     @FutureOrPresent
-    private LocalDate activeFrom;
+    private LocalDate activeStart;
     @NotNull
     @Future
     private LocalDate expiryDate;
@@ -61,7 +61,7 @@ class Card extends BaseEntity {
                 String accountNumber,
                 String userId,
                 String cardHolderName,
-                LocalDate activeFrom,
+                LocalDate activeStart,
                 LocalDate expiryDate,
                 String cvv,
                 CardType cardType,
@@ -72,7 +72,7 @@ class Card extends BaseEntity {
         this.accountNumber = accountNumber;
         this.userId = userId;
         this.cardHolderName = cardHolderName;
-        this.activeFrom = activeFrom;
+        this.activeStart = activeStart;
         this.expiryDate = expiryDate;
         this.cvv = cvv;
         this.cardType = cardType;
