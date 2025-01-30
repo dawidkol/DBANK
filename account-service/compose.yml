@@ -1,0 +1,14 @@
+services:
+  accountdb:
+    image: 'postgres:latest'
+    container_name: accountdb
+    restart: always
+    environment:
+      POSTGRES_DB: accountdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /pg-data
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./pg-data:/pg-data
