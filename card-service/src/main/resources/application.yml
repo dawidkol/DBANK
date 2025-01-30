@@ -1,10 +1,3 @@
-spring:
-  application:
-    name: card-service
-
-  profiles:
-    active: dev
-
 eureka:
   instance:
     prefer-ip-address: true
@@ -14,5 +7,56 @@ eureka:
     service-url:
       defaultZone: http://localhost:8000/eureka
 
+server:
+  port: 8086
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  application:
+    name: card-service
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  profiles:
+    active: prod
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+      open-in-view: false
+    open-in-view: false
+
+  flyway:
+    locations:
+      - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+  devtools:
+    livereload:
+      enabled: false
+
+  docker:
+    compose:
+      enabled: false
+
 scheduler:
   cards-active: 0 0 0 * * *
+
+logging:
+  level:
+    pl:
+      dk:
+        cardservice: TRACE
+logging.level.org.hibernate.orm.jdbc.bind: TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
