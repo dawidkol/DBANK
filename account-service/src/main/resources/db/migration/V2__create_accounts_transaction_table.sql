@@ -1,5 +1,4 @@
-DROP TABLE IF EXISTS accounts_transactions;
-CREATE TABLE accounts_transactions
+CREATE TABLE IF NOT EXISTS accounts_transactions
 (
     id                         VARCHAR(36) PRIMARY KEY NOT NULL,
     transaction_date           TIMESTAMP               NOT NULL,

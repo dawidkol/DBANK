@@ -1,5 +1,4 @@
-DROP TABLE IF EXISTS accounts;
-CREATE TABLE accounts
+CREATE TABLE IF NOT EXISTS accounts
 (
     account_number VARCHAR(26) NOT NULL PRIMARY KEY,
     account_type   VARCHAR(20),

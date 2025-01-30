@@ -1,10 +1,3 @@
-spring:
-  application:
-    name: account-service
-
-  profiles:
-    active: dev
-
 eureka:
   instance:
     prefer-ip-address: true
@@ -13,3 +6,87 @@ eureka:
     register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8000/eureka
+
+server:
+  port: 8082
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  application:
+    name: account-service
+
+  profiles:
+    active: prod
+
+  docker:
+    compose:
+      enabled: false
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        retries: 3
+        spring.json.use.type.headers: false
+      group-id: account-service-events-listener-group
+    listener:
+      concurrency: 3
+
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        retries: 3
+        retry-backoff-ms: 5000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+    open-in-view: false
+
+  flyway:
+    locations:
+      - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+  modulith:
+    events:
+      republish-outstanding-events-on-restart: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 2
+
+logging:
+  level:
+    pl:
+      dk:
+        accounts_service: TRACE
+logging.level.org.hibernate.orm.jdbc.bind: TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
