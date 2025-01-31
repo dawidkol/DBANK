@@ -1,9 +1,3 @@
-spring:
-  application:
-    name: user-service
-  profiles:
-    default: dev
-
 eureka:
   instance:
     prefer-ip-address: true
@@ -12,3 +6,58 @@ eureka:
     register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8000/eureka
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-stacktrace: never
+
+spring:
+  application:
+    name: user-service
+
+  output:
+    ansi:
+      enabled: always
+
+  profiles:
+    default: prod
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+      open-in-view: false
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        retries: 3
+        retry-backoff-ms: 5000
+
+  flyway:
+    locations:
+      - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+  docker:
+    compose:
+      enabled: false
+
+logging:
+  level:
+    pl:
+      dk:
+        user_service: TRACE
+logging.level.org.hibernate.orm.jdbc.bind: TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE

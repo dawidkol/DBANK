@@ -1,0 +1,14 @@
+services:
+  userdb:
+    image: 'postgres:latest'
+    container_name: userdb
+    restart: always
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /pg-data
+    ports:
+      - '5438:5432'
+    volumes:
+      - ./pg-data:/pg-data
