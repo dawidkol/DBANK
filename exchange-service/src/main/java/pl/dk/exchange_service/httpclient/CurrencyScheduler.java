@@ -12,7 +12,6 @@ class CurrencyScheduler {
 
     private final CurrencyHttpClient currencyHttpClient;
 
-
     @Scheduled(cron = "${scheduler.update-currencies}")
     public void fetchCurrencies() {
         log.info("Starting fetching currencies from NBP");

@@ -51,26 +51,25 @@ class CurrencyHttpClient {
                             .ask(BigDecimal.ONE)
                             .build();
                     currenciesToSave.add(PLN);
-                    continue;
                 }
-            }
-
-            String uri = ("/exchangerates/rates/c/{currencyType}");
-            CurrencyReceiver currency = restClient.get()
-                    .uri(uri, currencyCode.toString())
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<CurrencyReceiver>() {
-                    });
-
-            if (currency != null) {
-                Rates rate = currency.rates()[0];
-                currencyRepository.findFirstByCurrencyType(currencyCode)
-                        .ifPresentOrElse(existingCurrency -> {
-                            updateCurrency(existingCurrency, rate);
-                        }, () -> {
-                            Currency currencyToSave = createCurrency(currency, rate);
-                            currenciesToSave.add(currencyToSave);
+            } else {
+                String uri = ("/exchangerates/rates/c/{currencyType}");
+                CurrencyReceiver currency = restClient.get()
+                        .uri(uri, currencyCode.toString())
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<CurrencyReceiver>() {
                         });
+
+                if (currency != null) {
+                    Rates rate = currency.rates()[0];
+                    currencyRepository.findFirstByCurrencyType(currencyCode)
+                            .ifPresentOrElse(existingCurrency -> {
+                                updateCurrency(existingCurrency, rate);
+                            }, () -> {
+                                Currency currencyToSave = createCurrency(currency, rate);
+                                currenciesToSave.add(currencyToSave);
+                            });
+                }
             }
         }
         if (!currenciesToSave.isEmpty()) {
