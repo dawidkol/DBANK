@@ -1,6 +1,16 @@
 spring:
   application:
     name: eureka-server
+
+  docker:
+    compose:
+      enabled: true
+      stop:
+        command: down
+      skip:
+        in-tests: true
+      file: eureka-server/compose.yml
+
 server:
   port: 8000
 
