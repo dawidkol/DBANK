@@ -28,7 +28,7 @@ spring:
       hibernate:
         highlight_sql: true
         format_sql: true
-      open-in-view: false
+    open-in-view: false
 
   flyway:
     locations:
