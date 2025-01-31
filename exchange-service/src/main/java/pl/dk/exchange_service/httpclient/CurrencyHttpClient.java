@@ -1,5 +1,6 @@
 package pl.dk.exchange_service.httpclient;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ class CurrencyHttpClient {
         this.currencyRepository = currencyRepository;
     }
 
+    @PostConstruct
     @Transactional
     public void fetchCurrencies() {
         List<Currency> currenciesToSave = new ArrayList<>();

@@ -1,0 +1,24 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://localhost:5436/notificationdb
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  docker:
+    compose:
+      enabled: true
+      stop:
+        command: down
+      skip:
+        in-tests: true
+      file: notification-service/compose.yml
+
+  devtools:
+    livereload:
+      enabled: false
+    add-properties: false
+
