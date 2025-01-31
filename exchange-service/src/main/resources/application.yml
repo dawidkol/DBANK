@@ -1,14 +1,50 @@
+server:
+  port: 8085
+  error:
+    include-message: always
+    include-stacktrace: never
+
 spring:
   application:
     name: exchange-service
 
+  output:
+    ansi:
+      enabled: ALWAYS
+
   profiles:
-    active: dev
+    active: prod
 
   cloud:
     openfeign:
       okhttp:
         enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        highlight_sql: true
+        format_sql: true
+      open-in-view: false
+
+  flyway:
+    locations:
+      - classpath:db/migration
+    clean-disabled: false
+    enabled: true
+    execute-in-transaction: true
+
+  docker:
+    compose:
+      enabled: false
+
+  devtools:
+    livereload:
+      enabled: false
+    add-properties: false
 
 eureka:
   instance:
@@ -21,3 +57,11 @@ eureka:
 
 scheduler:
   update-currencies: 0 0 * * * *
+
+logging:
+  level:
+    pl:
+      dk:
+        exchange_service: TRACE
+logging.level.org.hibernate.orm.jdbc.bind: TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
