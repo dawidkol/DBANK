@@ -1,0 +1,23 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgres://localhost:5434/exchangedb
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  docker:
+    compose:
+      enabled: true
+      stop:
+        command: down
+      skip:
+        in-tests: true
+      file: exchange-service/compose.yml
+
+  devtools:
+    livereload:
+      enabled: false
+    add-properties: false
