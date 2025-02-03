@@ -22,7 +22,7 @@ spring:
       enabled: always
 
   profiles:
-    default: prod
+    active: prod
 
   jpa:
     hibernate:
