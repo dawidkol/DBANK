@@ -1,8 +1,16 @@
+server:
+  port: 9000
+  error:
+    include-message: always
+    include-stacktrace: never
+
 spring:
   application:
     name: gateway-server
-  profiles:
-    active: dev
+
+  output:
+    ansi:
+      enabled: ALWAYS
 
   cloud:
     gateway:
@@ -20,3 +28,10 @@ eureka:
     service-url:
       defaultZone: http://localhost:8000/eureka
 
+logging:
+  level:
+    pl:
+      dk:
+        gateway_server: TRACE
+logging.level.org.hibernate.orm.jdbc.bind: TRACE
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
