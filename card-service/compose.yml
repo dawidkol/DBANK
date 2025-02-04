@@ -1,14 +1,13 @@
 services:
   carddb:
-    image: 'postgres:latest'
+    image: postgres:15-alpine
     container_name: carddb
     restart: always
     environment:
       POSTGRES_DB: carddb
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /pg-data
     ports:
       - '5433:5432'
     volumes:
-      - ./pg-data:/pg-data
+      - ./pg-data:/var/lib/postgresql/data

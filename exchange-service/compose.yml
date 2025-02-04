@@ -1,14 +1,13 @@
 services:
   exchangedb:
-    image: 'postgres:latest'
+    image: postgres:15-alpine
     container_name: exchangedb
     restart: always
     environment:
       POSTGRES_DB: exchangedb
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /pg-data
     ports:
       - '5434:5432'
     volumes:
-      - ./pg-data:/pg-data
+      - ./pg-data:/var/lib/postgresql/data
