@@ -167,7 +167,7 @@
 				<version>3.4.4</version>
 				<configuration>
 					<to>
-						<image>${project.artifactId}:s1</image>
+						<image>dkcodepro/${project.artifactId}:s1</image>
 					</to>
 				</configuration>
 			</plugin>
