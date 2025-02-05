@@ -69,7 +69,12 @@ jobs:
       #-----------------------------------------------------------------------------------------------------------------
       - name: Unit Test notification-service
         run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
-
+        env:
+          APP_MAIL_USERNAME: ${{ EMAIL }}
+          APP_MAIL_PASSWORD: ${{ EMAIL_PASSWORD }}
+          TWILIO_PHONE-NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
+          TWILIO_ACCOUNT-SID: ${{ secrets.TWILIO_ACCOUNT-SID }}
+          TWILIO_AUTH-TOKEN: ${{ secrets.TWILIO_AUTH-TOKEN }}
       - name: Build notification-service application
         run: |
           mvn clean --file notification-service/pom.xml -X
