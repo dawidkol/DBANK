@@ -9,13 +9,13 @@ jobs:
   build-deploy:
     name: Build and Deploy dbank
     runs-on: ubuntu-latest
-#    env:
-#      MY_PHONE_NUMBER: ${{ secrets.MY_PHONE_NUMBER }}
-#      APP_MAIL_USERNAME: ${{ secrets.EMAIL }}
-#      APP_MAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-#      TWILIO_PHONE-NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
-#      TWILIO_ACCOUNT-SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
-#      TWILIO_AUTH-TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+    env:
+      MY_PHONE_NUMBER: ${{ secrets.MY_PHONE_NUMBER }}
+      APP_MAIL_USERNAME: ${{ secrets.EMAIL }}
+      APP_MAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
+      TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+      TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
     steps:
       #-----------------------------------------------------------------------------------------------------------------
       - name: Checkout code
@@ -76,13 +76,13 @@ jobs:
 #          mvn -B package -DskipTests --file loan-service/pom.xml -X
       #-----------------------------------------------------------------------------------------------------------------
       - name: Unit Test notification-service
-        env:
-          MY_PHONE_NUMBER: ${{ secrets.MY_PHONE_NUMBER }}
-          APP_MAIL_USERNAME: ${{ secrets.EMAIL }}
-          APP_MAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
-          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
-          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+#        env:
+#          MY_PHONE_NUMBER: ${{ secrets.MY_PHONE_NUMBER }}
+#          APP_MAIL_USERNAME: ${{ secrets.EMAIL }}
+#          APP_MAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+#          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
+#          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+#          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
         run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
       - name: Build notification-service application
         run: |
