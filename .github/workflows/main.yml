@@ -54,7 +54,7 @@ jobs:
         with:
           context: ./account-service
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/account-service:$(date-'%Y-%m-%d%H-%M-%S')
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/account-service:latest
 #      #-----------------------------------------------------------------------------------------------------------------
 #      - name: Unit Test card-service
 #        run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
