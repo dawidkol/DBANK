@@ -1,12 +1,11 @@
 name: Build & Deploy
-
 on:
   push:
     branches:
       - feature/github
-#      - master
 jobs:
   build-deploy:
+#-----------------------------------------------------------------------------------------------------------------------
     name: Build and Deploy dbank
     runs-on: ubuntu-latest
     env:
@@ -17,22 +16,22 @@ jobs:
       TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
       TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
     steps:
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test account-service
         run: mvn -B test -Dspring.profiles.active=dev --file account-service/pom.xml -X
 
@@ -47,7 +46,7 @@ jobs:
           context: ./account-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/account-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test card-service
         run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
 
@@ -62,7 +61,7 @@ jobs:
           context: ./card-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/card-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test eureka-server
         run: mvn -B test --file eureka-server/pom.xml -X
 
@@ -77,7 +76,7 @@ jobs:
           context: ./eureka-server
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/eureka-server:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test exchange-service
         run: mvn -B test -Dspring.profiles.active=dev --file exchange-service/pom.xml -X
 
@@ -92,7 +91,7 @@ jobs:
           context: ./exchange-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/exchange-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test gateway-server
         run: mvn -B test --file gateway-server/pom.xml -X
 
@@ -107,7 +106,7 @@ jobs:
           context: ./gateway-server
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/gateway-server:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test loan-service
         run: mvn -B test -Dspring.profiles.active=dev --file loan-service/pom.xml -X
 
@@ -122,7 +121,7 @@ jobs:
           context: ./loan-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/loan-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test notification-service
         run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
 
@@ -137,7 +136,7 @@ jobs:
           context: ./notification-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/notification-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test transfer-service
         run: mvn -B test -Dspring.profiles.active=dev --file transfer-service/pom.xml -X
 
@@ -152,7 +151,7 @@ jobs:
           context: ./transfer-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/transfer-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------
       - name: Unit Test user-service
         run: mvn -B test -Dspring.profiles.active=dev --file user-service/pom.xml -X
 
@@ -167,4 +166,4 @@ jobs:
           context: ./user-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/user-service:latest
-      #-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
