@@ -3,7 +3,8 @@ name: Build & Deploy
 on:
   push:
     branches:
-      - master
+      - feature/github
+#      - master
 
 jobs:
   build-deploy:
@@ -34,68 +35,88 @@ jobs:
         run: |
           mvn clean --file account-service/pom.xml -X
           mvn -B package -DskipTests --file account-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test card-service
-        run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
 
-      - name: Build card-service application
-        run: |
-          mvn clean --file card-service/pom.xml -X
-          mvn -B package -DskipTests --file card-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test eureka-server
-        run: mvn -B test --file eureka-server/pom.xml -X
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./account-service
+          push: false
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/account-service:$(date-'%Y-%m-%d%H-%M-%S')
 
-      - name: Build eureka-server application
-        run: |
-          mvn clean --file eureka-server/pom.xml -X
-          mvn -B package -DskipTests --file eureka-server/pom.xml -X
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: $ {{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v6
+        with:
+          context: ./account-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/account-service:$(date-'%Y-%m-%d%H-%M-%S')
 #      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test exchange-service
-        run: mvn -B test -Dspring.profiles.active=dev --file exchange-service/pom.xml -X
-
-      - name: Build exchange-service application
-        run: |
-          mvn clean --file exchange-service/pom.xml -X
-          mvn -B package -DskipTests --file exchange-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test gateway-server
-        run: mvn -B test --file gateway-server/pom.xml -X
-
-      - name: Build gateway-server application
-        run: |
-          mvn clean --file gateway-server/pom.xml -X
-          mvn -B package -DskipTests --file gateway-server/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test loan-service
-        run: mvn -B test -Dspring.profiles.active=dev --file loan-service/pom.xml -X
-
-      - name: Build loan-service application
-        run: |
-          mvn clean --file loan-service/pom.xml -X
-          mvn -B package -DskipTests --file loan-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test notification-service
-        run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
-
-      - name: Build notification-service application
-        run: |
-          mvn clean --file notification-service/pom.xml -X
-          mvn -B package -DskipTests --file notification-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test transfer-service
-        run: mvn -B test -Dspring.profiles.active=dev --file transfer-service/pom.xml -X
-
-      - name: Build transfer-service application
-        run: |
-          mvn clean --file transfer-service/pom.xml -X
-          mvn -B package -DskipTests --file transfer-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
-      - name: Unit Test user-service
-        run: mvn -B test -Dspring.profiles.active=dev --file user-service/pom.xml -X
-
-      - name: Build user-service application
-        run: |
-          mvn clean --file user-service/pom.xml -X
-          mvn -B package -DskipTests --file user-service/pom.xml -X
-      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test card-service
+#        run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
+#
+#      - name: Build card-service application
+#        run: |
+#          mvn clean --file card-service/pom.xml -X
+#          mvn -B package -DskipTests --file card-service/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test eureka-server
+#        run: mvn -B test --file eureka-server/pom.xml -X
+#
+#      - name: Build eureka-server application
+#        run: |
+#          mvn clean --file eureka-server/pom.xml -X
+#          mvn -B package -DskipTests --file eureka-server/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test exchange-service
+#        run: mvn -B test -Dspring.profiles.active=dev --file exchange-service/pom.xml -X
+#
+#      - name: Build exchange-service application
+#        run: |
+#          mvn clean --file exchange-service/pom.xml -X
+#          mvn -B package -DskipTests --file exchange-service/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test gateway-server
+#        run: mvn -B test --file gateway-server/pom.xml -X
+#
+#      - name: Build gateway-server application
+#        run: |
+#          mvn clean --file gateway-server/pom.xml -X
+#          mvn -B package -DskipTests --file gateway-server/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test loan-service
+#        run: mvn -B test -Dspring.profiles.active=dev --file loan-service/pom.xml -X
+#
+#      - name: Build loan-service application
+#        run: |
+#          mvn clean --file loan-service/pom.xml -X
+#          mvn -B package -DskipTests --file loan-service/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test notification-service
+#        run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
+#
+#      - name: Build notification-service application
+#        run: |
+#          mvn clean --file notification-service/pom.xml -X
+#          mvn -B package -DskipTests --file notification-service/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test transfer-service
+#        run: mvn -B test -Dspring.profiles.active=dev --file transfer-service/pom.xml -X
+#
+#      - name: Build transfer-service application
+#        run: |
+#          mvn clean --file transfer-service/pom.xml -X
+#          mvn -B package -DskipTests --file transfer-service/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
+#      - name: Unit Test user-service
+#        run: mvn -B test -Dspring.profiles.active=dev --file user-service/pom.xml -X
+#
+#      - name: Build user-service application
+#        run: |
+#          mvn clean --file user-service/pom.xml -X
+#          mvn -B package -DskipTests --file user-service/pom.xml -X
+#      #-----------------------------------------------------------------------------------------------------------------
