@@ -5,7 +5,6 @@ on:
     branches:
       - feature/github
 #      - master
-
 jobs:
   build-deploy:
     name: Build and Deploy dbank
@@ -27,7 +26,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-
       #-----------------------------------------------------------------------------------------------------------------
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -49,68 +47,124 @@ jobs:
           context: ./account-service
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/account-service:latest
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test card-service
-#        run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
-#
-#      - name: Build card-service application
-#        run: |
-#          mvn clean --file card-service/pom.xml -X
-#          mvn -B package -DskipTests --file card-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test eureka-server
-#        run: mvn -B test --file eureka-server/pom.xml -X
-#
-#      - name: Build eureka-server application
-#        run: |
-#          mvn clean --file eureka-server/pom.xml -X
-#          mvn -B package -DskipTests --file eureka-server/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test exchange-service
-#        run: mvn -B test -Dspring.profiles.active=dev --file exchange-service/pom.xml -X
-#
-#      - name: Build exchange-service application
-#        run: |
-#          mvn clean --file exchange-service/pom.xml -X
-#          mvn -B package -DskipTests --file exchange-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test gateway-server
-#        run: mvn -B test --file gateway-server/pom.xml -X
-#
-#      - name: Build gateway-server application
-#        run: |
-#          mvn clean --file gateway-server/pom.xml -X
-#          mvn -B package -DskipTests --file gateway-server/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test loan-service
-#        run: mvn -B test -Dspring.profiles.active=dev --file loan-service/pom.xml -X
-#
-#      - name: Build loan-service application
-#        run: |
-#          mvn clean --file loan-service/pom.xml -X
-#          mvn -B package -DskipTests --file loan-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test notification-service
-#        run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
-#
-#      - name: Build notification-service application
-#        run: |
-#          mvn clean --file notification-service/pom.xml -X
-#          mvn -B package -DskipTests --file notification-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test transfer-service
-#        run: mvn -B test -Dspring.profiles.active=dev --file transfer-service/pom.xml -X
-#
-#      - name: Build transfer-service application
-#        run: |
-#          mvn clean --file transfer-service/pom.xml -X
-#          mvn -B package -DskipTests --file transfer-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
-#      - name: Unit Test user-service
-#        run: mvn -B test -Dspring.profiles.active=dev --file user-service/pom.xml -X
-#
-#      - name: Build user-service application
-#        run: |
-#          mvn clean --file user-service/pom.xml -X
-#          mvn -B package -DskipTests --file user-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test card-service
+        run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
+
+      - name: Build card-service application
+        run: |
+          mvn clean --file card-service/pom.xml -X
+          mvn -B package -DskipTests --file card-service/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./card-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/card-service:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test eureka-server
+        run: mvn -B test --file eureka-server/pom.xml -X
+
+      - name: Build eureka-server application
+        run: |
+          mvn clean --file eureka-server/pom.xml -X
+          mvn -B package -DskipTests --file eureka-server/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./eureka-server
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/eureka-server:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test exchange-service
+        run: mvn -B test -Dspring.profiles.active=dev --file exchange-service/pom.xml -X
+
+      - name: Build exchange-service application
+        run: |
+          mvn clean --file exchange-service/pom.xml -X
+          mvn -B package -DskipTests --file exchange-service/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./exchange-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/exchange-service:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test gateway-server
+        run: mvn -B test --file gateway-server/pom.xml -X
+
+      - name: Build gateway-server application
+        run: |
+          mvn clean --file gateway-server/pom.xml -X
+          mvn -B package -DskipTests --file gateway-server/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./gateway-server
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/gateway-server:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test loan-service
+        run: mvn -B test -Dspring.profiles.active=dev --file loan-service/pom.xml -X
+
+      - name: Build loan-service application
+        run: |
+          mvn clean --file loan-service/pom.xml -X
+          mvn -B package -DskipTests --file loan-service/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./loan-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/loan-service:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test notification-service
+        run: mvn -B test -Dspring.profiles.active=dev --file notification-service/pom.xml -X
+
+      - name: Build notification-service application
+        run: |
+          mvn clean --file notification-service/pom.xml -X
+          mvn -B package -DskipTests --file notification-service/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./notification-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/notification-service:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test transfer-service
+        run: mvn -B test -Dspring.profiles.active=dev --file transfer-service/pom.xml -X
+
+      - name: Build transfer-service application
+        run: |
+          mvn clean --file transfer-service/pom.xml -X
+          mvn -B package -DskipTests --file transfer-service/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./transfer-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/transfer-service:latest
+      #-----------------------------------------------------------------------------------------------------------------
+      - name: Unit Test user-service
+        run: mvn -B test -Dspring.profiles.active=dev --file user-service/pom.xml -X
+
+      - name: Build user-service application
+        run: |
+          mvn clean --file user-service/pom.xml -X
+          mvn -B package -DskipTests --file user-service/pom.xml -X
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./user-service
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/user-service:latest
+      #-----------------------------------------------------------------------------------------------------------------
