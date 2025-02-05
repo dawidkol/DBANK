@@ -3,8 +3,8 @@ name: Build & Deploy
 on:
   push:
     branches:
-      - feature/github
-#      - master
+      - master
+
 jobs:
   build-deploy:
     name: Build and Deploy dbank
@@ -34,7 +34,7 @@ jobs:
         run: |
           mvn clean --file account-service/pom.xml -X
           mvn -B package -DskipTests --file account-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
       - name: Unit Test card-service
         run: mvn -B test -Dspring.profiles.active=dev --file card-service/pom.xml -X
 
@@ -42,7 +42,7 @@ jobs:
         run: |
           mvn clean --file card-service/pom.xml -X
           mvn -B package -DskipTests --file card-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
       - name: Unit Test eureka-server
         run: mvn -B test --file eureka-server/pom.xml -X
 
@@ -58,7 +58,7 @@ jobs:
         run: |
           mvn clean --file exchange-service/pom.xml -X
           mvn -B package -DskipTests --file exchange-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
       - name: Unit Test gateway-server
         run: mvn -B test --file gateway-server/pom.xml -X
 
@@ -66,7 +66,7 @@ jobs:
         run: |
           mvn clean --file gateway-server/pom.xml -X
           mvn -B package -DskipTests --file gateway-server/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
       - name: Unit Test loan-service
         run: mvn -B test -Dspring.profiles.active=dev --file loan-service/pom.xml -X
 
@@ -98,4 +98,4 @@ jobs:
         run: |
           mvn clean --file user-service/pom.xml -X
           mvn -B package -DskipTests --file user-service/pom.xml -X
-#      #-----------------------------------------------------------------------------------------------------------------
+      #-----------------------------------------------------------------------------------------------------------------
