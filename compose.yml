@@ -1,0 +1,274 @@
+services:
+  zoo1:
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zoo1
+    container_name: zoo1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zoo1:2888:3888
+    extends:
+      file: common.yml
+      service: network-service
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka1
+    container_name: kafka1
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092,DOCKER://host.docker.internal:29092
+      KAFKA_BROKER_ID: 1
+    extends:
+      file: common.yml
+      service: kafka-service
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka2
+    container_name: kafka2
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:19093,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9093,DOCKER://host.docker.internal:29093
+      KAFKA_BROKER_ID: 2
+    extends:
+      file: common.yml
+      service: kafka-service
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka3
+    container_name: kafka3
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3:19094,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094,DOCKER://host.docker.internal:29094
+      KAFKA_BROKER_ID: 3
+    extends:
+      file: common.yml
+      service: kafka-service
+
+  eureka-server:
+    image: dkcodepro/eureka-server:latest
+    hostname: eureka-server
+    container_name: eureka-server
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_DOCKER_COMPOSE_ENABLED: false
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    extends:
+      file: common.yml
+      service: network-service
+
+  user-service-db:
+    image: postgres:15-alpine
+    container_name: user-service-db
+    hostname: user-service-db
+    environment:
+      POSTGRES_DB: user-db
+    volumes:
+      - user-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  user-service:
+    image: dkcodepro/user-service:latest
+    hostname: user-service
+    container_name: user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-service-db:5432/user-db
+    depends_on:
+      - user-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-kafka-config-service
+
+  account-service-db:
+    image: postgres:15-alpine
+    container_name: account-service-db
+    hostname: account-service-db
+    environment:
+      POSTGRES_DB: account-db
+    ports:
+      - "5432"
+    volumes:
+      - account-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  account-service:
+    image: dkcodepro/account-service:latest
+    hostname: account-service
+    container_name: account-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://account-service-db:5432/account-db
+    depends_on:
+      - account-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-kafka-config-service
+
+  card-service-db:
+    image: postgres:15-alpine
+    container_name: card-service-db
+    hostname: card-service-db
+    environment:
+      POSTGRES_DB: card-db
+    volumes:
+      - card-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  card-service:
+    image: dkcodepro/card-service:latest
+    hostname: card-service
+    container_name: card-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://card-service-db:5432/card-db
+    depends_on:
+      - card-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-service
+
+  notification-service-db:
+    image: postgres:15-alpine
+    container_name: notification-service-db
+    hostname: notification-service-db
+    environment:
+      POSTGRES_DB: notification-db
+    volumes:
+      - notification-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  notification-service:
+    image: dkcodepro/notification-service:latest
+    hostname: notification-service
+    container_name: notification-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-service-db:5432/notification-db
+      APP_MAIL_USERNAME: ${EMAIL}
+      APP_MAIL_PASSWORD: ${EMAIL_PASSWORD}
+      TWILIO_PHONE-NUMBER: ${TWILIO_PHONE_NUMBER}
+      TWILIO_ACCOUNT-SID: ${TWILIO_ACCOUNT-SID}
+      TWILIO_AUTH-TOKEN: ${TWILIO_AUTH-TOKEN}
+    depends_on:
+      - notification-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-kafka-config-service
+
+  exchange-service-db:
+    image: postgres:15-alpine
+    container_name: exchange-service-db
+    hostname: exchange-service-db
+    environment:
+      POSTGRES_DB: exchange-db
+    volumes:
+      - exchange-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  exchange-service:
+    image: dkcodepro/exchange-service:latest
+    hostname: exchange-service
+    container_name: exchange-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://exchange-service-db:5432/exchange-db
+    depends_on:
+      - exchange-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-service
+
+  transfer-service-db:
+    image: postgres:15-alpine
+    container_name: transfer-service-db
+    hostname: transfer-service-db
+    environment:
+      POSTGRES_DB: transfer-db
+    volumes:
+      - transfer-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  transfer-service:
+    image: dkcodepro/transfer-service:latest
+    hostname: transfer-service
+    container_name: transfer-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://transfer-service-db:5432/transfer-db
+    depends_on:
+      - transfer-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-kafka-config-service
+
+  loan-service-db:
+    image: postgres:15-alpine
+    container_name: loan-service-db
+    hostname: loan-service-db
+    environment:
+      POSTGRES_DB: loan-db
+    volumes:
+      - loan-data:/var/lib/postgresql/data
+    extends:
+      file: common.yml
+      service: postgres-service
+
+  loan-service:
+    image: dkcodepro/loan-service:latest
+    hostname: loan-service
+    container_name: loan-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://loan-service-db:5432/loan-db
+    depends_on:
+      - loan-service-db
+      - eureka-server
+    extends:
+      file: common.yml
+      service: spring-kafka-config-service
+
+  gateway-server:
+    image: dkcodepro/gateway-server:latest
+    hostname: gateway-server
+    container_name: gateway-server
+    ports:
+      - "9000:9000"
+    depends_on:
+      - user-service
+      - account-service
+      - card-service
+      - exchange-service
+      - notification-service
+      - transfer-service
+      - loan-service
+    extends:
+      file: common.yml
+      service: eureka-service
+
+volumes:
+  user-data:
+  account-data:
+  card-data:
+  exchange-data:
+  notification-data:
+  transfer-data:
+  loan-data:
+
+networks:
+  dbank:
+    driver: bridge

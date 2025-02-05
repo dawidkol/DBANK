@@ -2,7 +2,7 @@ name: Build & Deploy
 on:
   push:
     branches:
-      - feature/github
+      - master
 jobs:
   build-deploy:
 #-----------------------------------------------------------------------------------------------------------------------
