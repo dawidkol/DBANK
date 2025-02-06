@@ -80,9 +80,6 @@ Create a `.env` file in the root directory of the project and add the following 
    POSTGRES_USER=your_postgres_user
    POSTGRES_PASSWORD=your_postgres_password
 
-   # JWS Shared Key (for security)
-   JWS_SHARED_KEY=your_jws_shared_key
-
    # Twilio Configuration
    TWILIO_PHONE_NUMBER=your_twilio_phone_number
    TWILIO_ACCOUNT-SID=your_twilio_account_sid
