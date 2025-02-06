@@ -67,7 +67,7 @@ This repository contains the source code for a banking system named **dbank**. T
 - Kafka (for event-driven services)
 
 ### Step 1: Clone the Repository
-1. Clone the repository:
+Clone the repository:
    ```sh
    git clone https://github.com/your-repo/dbank.git
    cd dbank
