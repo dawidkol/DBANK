@@ -97,7 +97,7 @@ Replace the placeholders (your_postgres_user, your_postgres_password, etc.) with
    ```
 ### Step 4: Access the Application
    ``` http request
-   http://localhost:900
+   http://localhost:9000
    ```
 ### Step 5: Stopping the Application
 To stop the application and remove the containers, run:
